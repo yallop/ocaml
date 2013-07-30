@@ -307,7 +307,7 @@ let mkctf_attrs d attrs =
 %token <char> CHAR
 %token CLASS
 %token COLON
-%token COLONCOLON
+%token COLONCOLON /* XXX delete this one day */
 %token COLONEQUAL
 %token COLONGREATER
 %token COMMA
@@ -335,6 +335,7 @@ let mkctf_attrs d attrs =
 %token IF
 %token IN
 %token INCLUDE
+%token <string> INFIXCON
 %token <string> INFIXOP0
 %token <string> INFIXOP1
 %token <string> INFIXOP2
@@ -463,6 +464,7 @@ The precedences must be listed from low to high.
 %nonassoc LBRACKETATAT
 %right    COLONCOLON                    /* expr (e :: e :: e) */
 %left     INFIXOP2 PLUS PLUSDOT MINUS MINUSDOT PLUSEQ /* expr (e OP e OP e) */
+%right    INFIXCON                      /* expr (e ::? e ::? e) */
 %left     PERCENT INFIXOP3 STAR                 /* expr (e OP e OP e) */
 %right    INFIXOP4                      /* expr (e OP e OP e) */
 %nonassoc prec_unary_minus prec_unary_plus /* unary - */
@@ -1103,6 +1105,7 @@ expr:
       { syntax_error() }
   | expr_comma_list %prec below_COMMA
       { mkexp(Pexp_tuple(List.rev $1)) }
+
   | constr_longident simple_expr %prec below_SHARP
       { mkexp(Pexp_construct(mkrhs $1 1, Some $2)) }
   | name_tag simple_expr %prec below_SHARP
@@ -1120,6 +1123,12 @@ expr:
       { mkexp_cons (rhs_loc 2) (ghexp(Pexp_tuple[$1;$3])) (symbol_rloc()) }
   | LPAREN COLONCOLON RPAREN LPAREN expr COMMA expr RPAREN
       { mkexp_cons (rhs_loc 2) (ghexp(Pexp_tuple[$5;$7])) (symbol_rloc()) }
+
+  | expr INFIXCON expr
+      { mkexp(Pexp_construct(mkrhs (Lident $2) 2, Some (ghexp(Pexp_tuple[$1;$3])), false)) }
+  | LPAREN INFIXCON RPAREN LPAREN expr COMMA expr RPAREN
+      { mkexp_cons (rhs_loc 2) (ghexp(Pexp_tuple[$5;$7])) (symbol_rloc()) }
+
   | expr INFIXOP0 expr
       { mkinfix $1 $2 $3 }
   | expr INFIXOP1 expr
@@ -1950,6 +1959,7 @@ operator:
   | INFIXOP2                                    { $1 }
   | INFIXOP3                                    { $1 }
   | INFIXOP4                                    { $1 }
+  | INFIXCON                                    { $1 }
   | BANG                                        { "!" }
   | PLUS                                        { "+" }
   | PLUSDOT                                     { "+." }
