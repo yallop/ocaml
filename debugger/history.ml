@@ -26,7 +26,7 @@ let add_current_time () =
     if !history = [] then
       history := [time]
     else if time <> List.hd !history then
-      history := list_truncate !history_size (time::!history)
+      history := list_truncate !history_size (time :: !history)
 
 let previous_time_1 () =
   match !history with

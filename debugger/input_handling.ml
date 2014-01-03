@@ -24,7 +24,7 @@ let active_files =
 
 (* Add a file to the list of actives files. *)
 let add_file file controller =
-  active_files := (file.io_fd, (controller, file))::!active_files
+  active_files := (file.io_fd, (controller, file)):: !active_files
 
 (* Remove a file from the list of actives files. *)
 let remove_file file =

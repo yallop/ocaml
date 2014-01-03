@@ -117,7 +117,7 @@ let split_nl s =
   let x = ref [] in
   let rec go s =
     let pos = String.index s '\n' in
-    x := (String.before s pos)::!x;
+    x := (String.before s pos):: !x;
     go (String.after s (pos + 1))
   in
   try

@@ -77,7 +77,7 @@ let get_buffer pos mdle =
       let content = really_input_string inchan (in_channel_length inchan) in
       let buffer = (content, ref []) in
       buffer_list :=
-        (list_truncate !buffer_max_count ((mdle, buffer)::!buffer_list));
+        (list_truncate !buffer_max_count ((mdle, buffer) :: !buffer_list));
       buffer
 
 let buffer_content =

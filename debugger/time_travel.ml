@@ -371,18 +371,18 @@ let set_file_descriptor pid fd =
   in
     if !debug_time_travel then
       prerr_endline ("New connection: " ^(string_of_int pid));
-    find (!current_checkpoint::!checkpoints)
+    find (!current_checkpoint :: !checkpoints)
 
 (* Kill all the checkpoints. *)
 let kill_all_checkpoints () =
-  List.iter kill_checkpoint (!current_checkpoint::!checkpoints)
+  List.iter kill_checkpoint (!current_checkpoint :: !checkpoints)
 
 (* Kill a checkpoint without killing the process. *)
 (* (used when connection with the process is lost). *)
 (* --- Assume that the checkpoint is valid. *)
 let forget_process fd pid =
   let checkpoint =
-    List.find (function c -> c.c_pid = pid) (!current_checkpoint::!checkpoints)
+    List.find (function c -> c.c_pid = pid) (!current_checkpoint :: !checkpoints)
   in
     Printf.eprintf "Lost connection with process %d" pid;
     let kont =
