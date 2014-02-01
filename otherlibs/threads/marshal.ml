@@ -46,7 +46,7 @@ let total_size buff ofs = header_size + data_size buff ofs
 
 let from_string buff ofs =
   if ofs < 0 || ofs > String.length buff - header_size
-  then invalid_arg "Marshal.from_size"
+  then invalid_arg "Marshal.from_string"
   else begin
     let len = data_size_unsafe buff ofs in
     if ofs > String.length buff - (header_size + len)
