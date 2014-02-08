@@ -1595,11 +1595,15 @@ label_declarations:
   | label_declarations SEMI label_declaration   { $3 :: $1 }
 ;
 label_declaration:
-    mutable_flag label attributes COLON poly_type
+    core_type_list_opt mutable_flag label attributes COLON poly_type
       {
-       Type.field (mkrhs $2 2) $5 ~mut:$1 ~attrs:$3 ~loc:(symbol_rloc())
+       Type.field (mkrhs $3 2) $6 ~mut:$2 ~attrs:$4 ~loc:(symbol_rloc())
       }
 ;
+
+core_type_list_opt:
+  /* empty */                                   { () }
+| LPAREN core_type_comma_list RPAREN            { () }
 
 /* "with" constraints (additional type equations over signature components) */
 
