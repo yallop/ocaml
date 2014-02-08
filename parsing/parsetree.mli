@@ -347,6 +347,7 @@ and label_declaration =
     {
      pld_name: string loc;
      pld_mutable: mutable_flag;
+     pld_params: core_type list;
      pld_type: core_type;
      pld_loc: Location.t;
      pld_attributes: attributes; (* l [@id1] [@id2] : T *)

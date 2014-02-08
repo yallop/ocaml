@@ -1597,13 +1597,13 @@ label_declarations:
 label_declaration:
     core_type_list_opt mutable_flag label attributes COLON poly_type
       {
-       Type.field (mkrhs $3 2) $6 ~mut:$2 ~attrs:$4 ~loc:(symbol_rloc())
+       Type.field (mkrhs $3 2) $6 ~mut:$2 ~attrs:$4 ~params:$1 ~loc:(symbol_rloc())
       }
 ;
 
 core_type_list_opt:
-  /* empty */                                   { () }
-| LPAREN core_type_comma_list RPAREN            { () }
+  /* empty */                                   { [] }
+| LPAREN core_type_comma_list RPAREN            { $2 }
 
 /* "with" constraints (additional type equations over signature components) */
 

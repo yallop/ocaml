@@ -342,9 +342,10 @@ module Type = struct
      pcd_attributes = attrs;
     }
 
-  let field ?(loc = !default_loc) ?(attrs = []) ?(mut = Immutable) name typ =
+  let field ?(loc = !default_loc) ?(attrs = []) ?(mut = Immutable) ?(params = []) name typ =
     {
      pld_name = name;
+     pld_params = params;
      pld_mutable = mut;
      pld_type = typ;
      pld_loc = loc;
