@@ -375,6 +375,7 @@ and label_declaration =
      ld_id: Ident.t;
      ld_name: string loc;
      ld_mutable: mutable_flag;
+     ld_params: core_type list;
      ld_type: core_type;
      ld_loc: Location.t;
      ld_attributes: attributes;
