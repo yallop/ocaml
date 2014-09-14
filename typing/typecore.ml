@@ -1382,7 +1382,8 @@ let rec is_nonexpansive exp =
   match exp.exp_desc with
     Texp_ident(_,_,_) -> true
   | Texp_constant _ -> true
-  | Texp_let(rec_flag, pat_exp_list, body) ->
+  | Texp_let_and(pat_exp_list, body)
+  | Texp_let_rec(pat_exp_list, body) ->
       List.for_all (fun vb -> is_nonexpansive vb.vb_expr) pat_exp_list &&
       is_nonexpansive body
   | Texp_function _ -> true
@@ -1840,7 +1841,7 @@ and type_expect_ ?in_function env sexp ty_expected =
       let body =
         type_expect new_env (wrap_unpacks sbody unpacks) ty_expected in
       re {
-        exp_desc = Texp_let(Nonrecursive, pat_exp_list, body);
+        exp_desc = Texp_let_and(pat_exp_list, body);
         exp_loc = loc; exp_extra = [];
         exp_type = body.exp_type;
         exp_attributes = sexp.pexp_attributes;
@@ -1856,7 +1857,7 @@ and type_expect_ ?in_function env sexp ty_expected =
       let body =
         type_expect new_env (wrap_unpacks sbody unpacks) ty_expected in
       re {
-        exp_desc = Texp_let(Recursive, pat_exp_list, body);
+        exp_desc = Texp_let_rec(pat_exp_list, body);
         exp_loc = loc; exp_extra = [];
         exp_type = body.exp_type;
         exp_attributes = sexp.pexp_attributes;
@@ -3129,11 +3130,10 @@ and type_argument env sarg ty_expected' ty_expected =
       (* let-expand to have side effects *)
       let let_pat, let_var = var_pair "arg" texp.exp_type in
       re { texp with exp_type = ty_fun; exp_desc =
-           Texp_let (Nonrecursive,
-                     [{vb_pat=let_pat; vb_expr=texp; vb_attributes=[];
-                       vb_loc=Location.none;
-                      }],
-                     func let_var) }
+           Texp_let_and ([{vb_pat=let_pat; vb_expr=texp; vb_attributes=[];
+                           vb_loc=Location.none;
+                          }],
+                         func let_var) }
       end
   | _ ->
       let texp = type_expect env sarg ty_expected' in

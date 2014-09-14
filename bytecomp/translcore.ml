@@ -530,15 +530,15 @@ let rec push_defaults loc bindings cases partial =
         c_rhs={exp with exp_desc = Texp_function(l, pl, partial)}}]
   | [{c_lhs=pat; c_guard=None;
       c_rhs={exp_attributes=[{txt="#default"},_];
-             exp_desc = Texp_let
-               (Nonrecursive, binds, ({exp_desc = Texp_function _} as e2))}}] ->
+             exp_desc = Texp_let_and
+               (binds, ({exp_desc = Texp_function _} as e2))}}] ->
       push_defaults loc (binds :: bindings) [{c_lhs=pat;c_guard=None;c_rhs=e2}]
                     partial
   | [case] ->
       let exp =
         List.fold_left
           (fun exp binds ->
-            {exp with exp_desc = Texp_let(Nonrecursive, binds, exp)})
+            {exp with exp_desc = Texp_let_and(binds, exp)})
           case.c_rhs bindings
       in
       [{case with c_rhs=exp}]
@@ -659,8 +659,10 @@ and transl_exp0 e =
   | Texp_ident _ -> fatal_error "Translcore.transl_exp: bad Texp_ident"
   | Texp_constant cst ->
       Lconst(Const_base cst)
-  | Texp_let(rec_flag, pat_expr_list, body) ->
-      transl_let rec_flag pat_expr_list (event_before body (transl_exp body))
+  | Texp_let_and(pat_expr_list, body) ->
+      transl_let Nonrecursive pat_expr_list (event_before body (transl_exp body))
+  | Texp_let_rec(pat_expr_list, body) ->
+      transl_let Recursive pat_expr_list (event_before body (transl_exp body))
   | Texp_function (_, pat_expr_list, partial) ->
       let ((kind, params), body) =
         event_function e

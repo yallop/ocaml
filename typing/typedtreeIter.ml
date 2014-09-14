@@ -251,8 +251,11 @@ module MakeIterator(Iter : IteratorArgument) : sig
         match exp.exp_desc with
           Texp_ident (path, _, _) -> ()
         | Texp_constant cst -> ()
-        | Texp_let (rec_flag, list, exp) ->
-            iter_bindings rec_flag list;
+        | Texp_let_and (list, exp) ->
+            iter_bindings Nonrecursive list;
+            iter_expression exp
+        | Texp_let_rec (list, exp) ->
+            iter_bindings Recursive list;
             iter_expression exp
         | Texp_function (label, cases, _) ->
             iter_cases cases

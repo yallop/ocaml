@@ -277,8 +277,12 @@ and expression i ppf x =
   | Texp_ident (li,_,_) -> line i ppf "Pexp_ident %a\n" fmt_path li;
   | Texp_instvar (_, li,_) -> line i ppf "Pexp_instvar %a\n" fmt_path li;
   | Texp_constant (c) -> line i ppf "Pexp_constant %a\n" fmt_constant c;
-  | Texp_let (rf, l, e) ->
-      line i ppf "Pexp_let %a\n" fmt_rec_flag rf;
+  | Texp_let_and (l, e) ->
+      line i ppf "Pexp_let_and\n";
+      list i value_binding ppf l;
+      expression i ppf e;
+  | Texp_let_rec (l, e) ->
+      line i ppf "Pexp_let_rec\n";
       list i value_binding ppf l;
       expression i ppf e;
   | Texp_function (p, l, _partial) ->

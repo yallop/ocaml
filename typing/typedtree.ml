@@ -73,7 +73,8 @@ and exp_extra =
 and expression_desc =
     Texp_ident of Path.t * Longident.t loc * Types.value_description
   | Texp_constant of constant
-  | Texp_let of rec_flag * value_binding list * expression
+  | Texp_let_and of value_binding list * expression
+  | Texp_let_rec of value_binding list * expression
   | Texp_function of label * case list * partial
   | Texp_apply of expression * (label * expression option * optional) list
   | Texp_match of expression * case list * case list * partial

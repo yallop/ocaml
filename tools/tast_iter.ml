@@ -104,8 +104,11 @@ let expression sub exp =
   match exp.exp_desc with
   | Texp_ident _
   | Texp_constant _ -> ()
-  | Texp_let (rec_flag, list, exp) ->
-      sub # bindings (rec_flag, list);
+  | Texp_let_and (list, exp) ->
+      sub # bindings (Asttypes.Nonrecursive, list);
+      sub # expression exp
+  | Texp_let_rec (list, exp) ->
+      sub # bindings (Asttypes.Recursive, list);
       sub # expression exp
   | Texp_function (_, cases, _) ->
       sub # cases cases

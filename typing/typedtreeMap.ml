@@ -95,7 +95,7 @@ module MakeMap(Map : MapArgument) = struct
       vb_loc = vb.vb_loc;
     }
 
-  and map_bindings rec_flag list =
+  and map_bindings list =
     List.map map_binding list
 
   and map_case {c_lhs; c_guard; c_rhs} =
@@ -114,7 +114,7 @@ module MakeMap(Map : MapArgument) = struct
       match item.str_desc with
           Tstr_eval (exp, attrs) -> Tstr_eval (map_expression exp, attrs)
         | Tstr_value (rec_flag, list) ->
-          Tstr_value (rec_flag, map_bindings rec_flag list)
+          Tstr_value (rec_flag, map_bindings list)
         | Tstr_primitive vd ->
           Tstr_primitive (map_value_description vd)
         | Tstr_type list ->
@@ -258,10 +258,12 @@ module MakeMap(Map : MapArgument) = struct
       match exp.exp_desc with
           Texp_ident (_, _, _)
         | Texp_constant _ -> exp.exp_desc
-        | Texp_let (rec_flag, list, exp) ->
-          Texp_let (rec_flag,
-                    map_bindings rec_flag list,
-                    map_expression exp)
+        | Texp_let_and (list, exp) ->
+          Texp_let_and (map_bindings list,
+                        map_expression exp)
+        | Texp_let_rec (list, exp) ->
+          Texp_let_rec (map_bindings list,
+                        map_expression exp)
         | Texp_function (label, cases, partial) ->
           Texp_function (label, map_cases cases, partial)
         | Texp_apply (exp, list) ->
@@ -535,7 +537,7 @@ module MakeMap(Map : MapArgument) = struct
                         optional)
                      ) args)
         | Tcl_let (rec_flat, bindings, ivars, cl) ->
-          Tcl_let (rec_flat, map_bindings rec_flat bindings,
+          Tcl_let (rec_flat, map_bindings bindings,
                    List.map (fun (id, name, exp) ->
                      (id, name, map_expression exp)) ivars,
                    map_class_expr cl)

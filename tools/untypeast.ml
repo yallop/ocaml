@@ -260,10 +260,10 @@ and untype_expression exp =
     match exp.exp_desc with
       Texp_ident (_path, lid, _) -> Pexp_ident (lid)
     | Texp_constant cst -> Pexp_constant cst
-    | Texp_let (Nonrecursive, list, exp) ->
+    | Texp_let_and (list, exp) ->
        Pexp_let_and(List.map untype_binding list,
                     untype_expression exp)
-    | Texp_let (Recursive, list, exp) ->
+    | Texp_let_rec (list, exp) ->
        Pexp_let_rec(List.map untype_binding list,
                     untype_expression exp)
     | Texp_function (label, [{c_lhs=p; c_guard=None; c_rhs=e}], _) ->
