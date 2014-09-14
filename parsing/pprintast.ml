@@ -522,7 +522,7 @@ class printer  ()= object(self:'self)
         self#paren true self#reset#expression f x
     | Pexp_ifthenelse _ | Pexp_sequence _ when ifthenelse ->
         self#paren true self#reset#expression f x
-    | Pexp_let _ | Pexp_letmodule _ when semi ->
+    | Pexp_let_and _ | Pexp_let_rec _ | Pexp_letmodule _ when semi ->
         self#paren true self#reset#expression f x
     | Pexp_fun (l, e0, p, e) ->
         pp f "@[<2>fun@;%a@;->@;%a@]"
@@ -536,11 +536,13 @@ class printer  ()= object(self:'self)
     | Pexp_try (e, l) ->
         pp f "@[<0>@[<hv2>try@ %a@]@ @[<0>with%a@]@]" (* "try@;@[<2>%a@]@\nwith@\n%a"*)
           self#reset#expression e  self#case_list l
-    | Pexp_let (rf, l, e) ->
-        (* pp f "@[<2>let %a%a in@;<1 -2>%a@]" (\*no identation here, a new line*\) *)
-        (*   self#rec_flag rf *)
+    | Pexp_let_and (l, e) ->
         pp f "@[<2>%a in@;<1 -2>%a@]"
-          self#reset#bindings (rf,l)
+          self#reset#bindings (Nonrecursive,l)
+          self#expression e
+    | Pexp_let_rec (l, e) ->
+        pp f "@[<2>%a in@;<1 -2>%a@]"
+          self#reset#bindings (Recursive,l)
           self#expression e
     | Pexp_apply (e, l) ->
         (if not (self#sugar_expr f x) then

@@ -311,8 +311,11 @@ module E = struct
     match desc with
     | Pexp_ident x -> ident ~loc ~attrs (map_loc sub x)
     | Pexp_constant x -> constant ~loc ~attrs x
-    | Pexp_let (r, vbs, e) ->
-        let_ ~loc ~attrs r (List.map (sub.value_binding sub) vbs)
+    | Pexp_let_and (vbs, e) ->
+        let_and ~loc ~attrs (List.map (sub.value_binding sub) vbs)
+          (sub.expr sub e)
+    | Pexp_let_rec (vbs, e) ->
+        let_rec ~loc ~attrs (List.map (sub.value_binding sub) vbs)
           (sub.expr sub e)
     | Pexp_fun (lab, def, p, e) ->
         fun_ ~loc ~attrs lab (map_opt (sub.expr sub) def) (sub.pat sub p)

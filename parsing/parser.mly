@@ -1083,7 +1083,11 @@ expr:
   | simple_expr simple_labeled_expr_list
       { mkexp(Pexp_apply($1, List.rev $2)) }
   | LET ext_attributes rec_flag let_bindings_no_attrs IN seq_expr
-      { mkexp_attrs (Pexp_let($3, List.rev $4, $6)) $2 }
+      { match $3 with
+        | Nonrecursive -> 
+          mkexp_attrs (Pexp_let_and(List.rev $4, $6)) $2
+        | Recursive -> 
+          mkexp_attrs (Pexp_let_rec(List.rev $4, $6)) $2 }
   | LET MODULE ext_attributes UIDENT module_binding_body IN seq_expr
       { mkexp_attrs (Pexp_letmodule(mkrhs $4 4, $5, $7)) $3 }
   | LET OPEN override_flag ext_attributes mod_longident IN seq_expr

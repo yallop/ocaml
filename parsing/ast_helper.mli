@@ -91,7 +91,9 @@ module Exp:
 
     val ident: ?loc:loc -> ?attrs:attrs -> lid -> expression
     val constant: ?loc:loc -> ?attrs:attrs -> constant -> expression
-    val let_: ?loc:loc -> ?attrs:attrs -> rec_flag -> value_binding list
+    val let_and: ?loc:loc -> ?attrs:attrs -> value_binding list
+              -> expression -> expression
+    val let_rec: ?loc:loc -> ?attrs:attrs -> value_binding list
               -> expression -> expression
     val fun_: ?loc:loc -> ?attrs:attrs -> label -> expression option -> pattern
               -> expression -> expression

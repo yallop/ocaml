@@ -176,7 +176,8 @@ and rw_exp iflag sexp =
     Pexp_ident _lid -> ()
   | Pexp_constant _cst -> ()
 
-  | Pexp_let(_, spat_sexp_list, sbody) ->
+  | Pexp_let_and(spat_sexp_list, sbody)
+  | Pexp_let_rec(spat_sexp_list, sbody) ->
     rewrite_patexp_list iflag spat_sexp_list;
     rewrite_exp iflag sbody
 

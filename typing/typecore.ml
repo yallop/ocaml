@@ -131,7 +131,8 @@ let iter_expression f e =
     | Pexp_function pel -> List.iter case pel
     | Pexp_fun (_, eo, _, e) -> may expr eo; expr e
     | Pexp_apply (e, lel) -> expr e; List.iter (fun (_, e) -> expr e) lel
-    | Pexp_let (_, pel, e) ->  expr e; List.iter binding pel
+    | Pexp_let_and (pel, e)
+    | Pexp_let_rec (pel, e) ->  expr e; List.iter binding pel
     | Pexp_match (e, pel)
     | Pexp_try (e, pel) -> expr e; List.iter case pel
     | Pexp_array el
@@ -1366,7 +1367,8 @@ let force_delayed_checks () =
 
 let rec final_subexpression sexp =
   match sexp.pexp_desc with
-    Pexp_let (_, _, e)
+    Pexp_let_and (_, e)
+  | Pexp_let_rec (_, e)
   | Pexp_sequence (_, e)
   | Pexp_try (e, _)
   | Pexp_ifthenelse (_, e, _)
@@ -1493,7 +1495,8 @@ let rec approx_type env sty =
 
 let rec type_approx env sexp =
   match sexp.pexp_desc with
-    Pexp_let (_, _, e) -> type_approx env e
+    Pexp_let_and (_, e) -> type_approx env e
+  | Pexp_let_rec (_, e) -> type_approx env e
   | Pexp_fun (p, _, _, e) when is_optional p ->
        newty (Tarrow(p, type_option (newvar ()), type_approx env e, Cok))
   | Pexp_fun (p,_,_, e) ->
@@ -1819,27 +1822,41 @@ and type_expect_ ?in_function env sexp ty_expected =
         exp_type = type_constant cst;
         exp_attributes = sexp.pexp_attributes;
         exp_env = env }
-  | Pexp_let(Nonrecursive,
-             [{pvb_pat=spat; pvb_expr=sval; pvb_attributes=[]}], sbody)
+  | Pexp_let_and([{pvb_pat=spat; pvb_expr=sval; pvb_attributes=[]}], sbody)
     when contains_gadt env spat ->
     (* TODO: allow non-empty attributes? *)
       type_expect ?in_function env
         {sexp with
          pexp_desc = Pexp_match (sval, [Ast_helper.Exp.case spat sbody])}
         ty_expected
-  | Pexp_let(rec_flag, spat_sexp_list, sbody) ->
+  | Pexp_let_and(spat_sexp_list, sbody) ->
       let scp =
-        match sexp.pexp_attributes, rec_flag with
-        | [{txt="#default"},_], _ -> None
-        | _, Recursive -> Some (Annot.Idef loc)
-        | _, Nonrecursive -> Some (Annot.Idef sbody.pexp_loc)
+        match sexp.pexp_attributes with
+        | [{txt="#default"},_] -> None
+        | _ -> Some (Annot.Idef sbody.pexp_loc)
       in
       let (pat_exp_list, new_env, unpacks) =
-        type_let env rec_flag spat_sexp_list scp true in
+        type_let env Nonrecursive spat_sexp_list scp true in
       let body =
         type_expect new_env (wrap_unpacks sbody unpacks) ty_expected in
       re {
-        exp_desc = Texp_let(rec_flag, pat_exp_list, body);
+        exp_desc = Texp_let(Nonrecursive, pat_exp_list, body);
+        exp_loc = loc; exp_extra = [];
+        exp_type = body.exp_type;
+        exp_attributes = sexp.pexp_attributes;
+        exp_env = env }
+  | Pexp_let_rec(spat_sexp_list, sbody) ->
+      let scp =
+        match sexp.pexp_attributes with
+        | [{txt="#default"},_] -> None
+        | _ -> Some (Annot.Idef loc)
+      in
+      let (pat_exp_list, new_env, unpacks) =
+        type_let env Recursive spat_sexp_list scp true in
+      let body =
+        type_expect new_env (wrap_unpacks sbody unpacks) ty_expected in
+      re {
+        exp_desc = Texp_let(Recursive, pat_exp_list, body);
         exp_loc = loc; exp_extra = [];
         exp_type = body.exp_type;
         exp_attributes = sexp.pexp_attributes;
@@ -1870,7 +1887,7 @@ and type_expect_ ?in_function env sexp ty_expected =
         Exp.fun_ ~loc
           l None
           (Pat.var ~loc (mknoloc "*opt*"))
-          (Exp.let_ ~loc Nonrecursive ~attrs:[mknoloc "#default",PStr []]
+          (Exp.let_and ~loc ~attrs:[mknoloc "#default",PStr []]
              [Vb.mk spat smatch] sexp)
       in
       type_expect ?in_function env sfun ty_expected
