@@ -863,9 +863,13 @@ class printer  ()= object(self:'self)
         pp f "fun@ %a@ ->@ %a"
           self#label_exp (l,eo,p)
           self#class_expr e
-    | Pcl_let (rf, l, ce) ->
+    | Pcl_let_and (l, ce) ->
         pp f "%a@ in@ %a"
-          self#bindings  (rf,l)
+          self#bindings  (Nonrecursive,l)
+          self#class_expr ce
+    | Pcl_let_rec (l, ce) ->
+        pp f "%a@ in@ %a"
+          self#bindings  (Recursive,l)
           self#class_expr ce
     | Pcl_apply (ce, l) ->
         pp f "(%a@ %a)"

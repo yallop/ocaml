@@ -354,8 +354,10 @@ and add_class_expr bv ce =
       let bv = add_pattern bv pat in add_class_expr bv ce
   | Pcl_apply(ce, exprl) ->
       add_class_expr bv ce; List.iter (fun (_,e) -> add_expr bv e) exprl
-  | Pcl_let(rf, pel, ce) ->
-      let bv = add_bindings rf bv pel in add_class_expr bv ce
+  | Pcl_let_and(pel, ce) ->
+      let bv = add_bindings Nonrecursive bv pel in add_class_expr bv ce
+  | Pcl_let_rec(pel, ce) ->
+      let bv = add_bindings Recursive bv pel in add_class_expr bv ce
   | Pcl_constraint(ce, ct) ->
       add_class_expr bv ce; add_class_type bv ct
   | Pcl_extension _ -> ()

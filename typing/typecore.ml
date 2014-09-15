@@ -204,7 +204,8 @@ let iter_expression f e =
     | Pcl_fun (_, eo, _,  ce) -> may expr eo; class_expr ce
     | Pcl_apply (ce, lel) ->
         class_expr ce; List.iter (fun (_, e) -> expr e) lel
-    | Pcl_let (_, pel, ce) ->
+    | Pcl_let_and (pel, ce)
+    | Pcl_let_rec (pel, ce) ->
         List.iter binding pel; class_expr ce
     | Pcl_constraint (ce, _) -> class_expr ce
     | Pcl_extension _ -> ()

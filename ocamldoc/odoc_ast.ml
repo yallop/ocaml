@@ -824,7 +824,8 @@ module Analyser =
                capp_params_code = params_code ;
              } )
 
-      | (Parsetree.Pcl_let (_, _, p_class_expr2), Typedtree.Tcl_let (_, _, _, tt_class_expr2)) ->
+      | ((Parsetree.Pcl_let_and (_, p_class_expr2)
+        | Parsetree.Pcl_let_rec (_, p_class_expr2)), Typedtree.Tcl_let (_, _, _, tt_class_expr2)) ->
           (* we don't care about these lets *)
           analyse_class_kind
               env current_class_name comment_opt last_pos p_class_expr2

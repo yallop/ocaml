@@ -543,8 +543,12 @@ and class_expr i ppf x =
       line i ppf "Pcl_apply\n";
       class_expr i ppf ce;
       list i label_x_expression ppf l;
-  | Pcl_let (rf, l, ce) ->
-      line i ppf "Pcl_let %a\n" fmt_rec_flag rf;
+  | Pcl_let_and (l, ce) ->
+      line i ppf "Pcl_let_and\n";
+      list i value_binding ppf l;
+      class_expr i ppf ce;
+  | Pcl_let_rec (l, ce) ->
+      line i ppf "Pcl_let_rec\n";
       list i value_binding ppf l;
       class_expr i ppf ce;
   | Pcl_constraint (ce, ct) ->

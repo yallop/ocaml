@@ -909,7 +909,7 @@ and class_expr cl_num val_env met_env scl =
         Cl.fun_ ~loc:scl.pcl_loc
           l None
           (Pat.var ~loc (mknoloc "*opt*"))
-          (Cl.let_ ~loc:scl.pcl_loc Nonrecursive [Vb.mk spat smatch] sbody)
+          (Cl.let_and ~loc:scl.pcl_loc [Vb.mk spat smatch] sbody)
           (* Note: we don't put the '#default' attribute, as it
              is not detected for class-level let bindings.  See #5975.*)
       in
@@ -1074,10 +1074,10 @@ and class_expr cl_num val_env met_env scl =
           cl_env = val_env;
           cl_attributes = scl.pcl_attributes;
          }
-  | Pcl_let (rec_flag, sdefs, scl') ->
+  | Pcl_let_and (sdefs, scl') ->
       let (defs, val_env) =
         try
-          Typecore.type_let val_env rec_flag sdefs None
+          Typecore.type_let val_env Nonrecursive sdefs None
         with Ctype.Unify [(ty, _)] ->
           raise(Error(scl.pcl_loc, val_env, Make_nongen_seltype ty))
       in
@@ -1114,7 +1114,53 @@ and class_expr cl_num val_env met_env scl =
           ([], met_env)
       in
       let cl = class_expr cl_num val_env met_env scl' in
-      rc {cl_desc = Tcl_let (rec_flag, defs, vals, cl);
+      rc {cl_desc = Tcl_let (Nonrecursive, defs, vals, cl);
+          cl_loc = scl.pcl_loc;
+          cl_type = cl.cl_type;
+          cl_env = val_env;
+          cl_attributes = scl.pcl_attributes;
+         }
+  | Pcl_let_rec (sdefs, scl') ->
+      let (defs, val_env) =
+        try
+          Typecore.type_let val_env Recursive sdefs None
+        with Ctype.Unify [(ty, _)] ->
+          raise(Error(scl.pcl_loc, val_env, Make_nongen_seltype ty))
+      in
+      let (vals, met_env) =
+        List.fold_right
+          (fun (id, id_loc) (vals, met_env) ->
+             let path = Pident id in
+             (* do not mark the value as used *)
+             let vd = Env.find_value path val_env in
+             Ctype.begin_def ();
+             let expr =
+               {exp_desc =
+                Texp_ident(path, mknoloc(Longident.Lident (Ident.name id)),vd);
+                exp_loc = Location.none; exp_extra = [];
+                exp_type = Ctype.instance val_env vd.val_type;
+                exp_attributes = [];
+                exp_env = val_env;
+               }
+             in
+             Ctype.end_def ();
+             Ctype.generalize expr.exp_type;
+             let desc =
+               {val_type = expr.exp_type; val_kind = Val_ivar (Immutable,
+                                                               cl_num);
+                val_attributes = [];
+                Types.val_loc = vd.Types.val_loc;
+               }
+             in
+             let id' = Ident.create (Ident.name id) in
+             ((id', id_loc, expr)
+              :: vals,
+              Env.add_value id' desc met_env))
+          (let_bound_idents_with_loc defs)
+          ([], met_env)
+      in
+      let cl = class_expr cl_num val_env met_env scl' in
+      rc {cl_desc = Tcl_let (Recursive, defs, vals, cl);
           cl_loc = scl.pcl_loc;
           cl_type = cl.cl_type;
           cl_env = val_env;
@@ -1165,7 +1211,8 @@ let rec approx_declaration cl =
         if Btype.is_optional l then Ctype.instance_def var_option
         else Ctype.newvar () in
       Ctype.newty (Tarrow (l, arg, approx_declaration cl, Cok))
-  | Pcl_let (_, _, cl) ->
+  | Pcl_let_and (_, cl)
+  | Pcl_let_rec (_, cl) ->
       approx_declaration cl
   | Pcl_constraint (cl, _) ->
       approx_declaration cl

@@ -547,10 +547,10 @@ and class_expr_desc =
 
            Invariant: n > 0
          *)
-  | Pcl_let of rec_flag * value_binding list * class_expr
-        (* let P1 = E1 and ... and Pn = EN in CE      (flag = Nonrecursive)
-           let rec P1 = E1 and ... and Pn = EN in CE  (flag = Recursive)
-         *)
+  | Pcl_let_and of value_binding list * class_expr
+        (* let P1 = E1 and ... and Pn = EN in CE *)
+  | Pcl_let_rec of value_binding list * class_expr
+        (* let rec P1 = E1 and ... and Pn = EN in CE *)
   | Pcl_constraint of class_expr * class_type
         (* (CE : CT) *)
   | Pcl_extension of extension

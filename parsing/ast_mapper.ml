@@ -427,8 +427,11 @@ module CE = struct
     | Pcl_apply (ce, l) ->
         apply ~loc ~attrs (sub.class_expr sub ce)
           (List.map (map_snd (sub.expr sub)) l)
-    | Pcl_let (r, vbs, ce) ->
-        let_ ~loc ~attrs r (List.map (sub.value_binding sub) vbs)
+    | Pcl_let_and (vbs, ce) ->
+        let_and ~loc ~attrs (List.map (sub.value_binding sub) vbs)
+          (sub.class_expr sub ce)
+    | Pcl_let_rec (vbs, ce) ->
+        let_rec ~loc ~attrs (List.map (sub.value_binding sub) vbs)
           (sub.class_expr sub ce)
     | Pcl_constraint (ce, ct) ->
         constraint_ ~loc ~attrs (sub.class_expr sub ce) (sub.class_type sub ct)

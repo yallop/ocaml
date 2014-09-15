@@ -205,7 +205,8 @@ module Cl = struct
   let structure ?loc ?attrs a = mk ?loc ?attrs (Pcl_structure a)
   let fun_ ?loc ?attrs a b c d = mk ?loc ?attrs (Pcl_fun (a, b, c, d))
   let apply ?loc ?attrs a b = mk ?loc ?attrs (Pcl_apply (a, b))
-  let let_ ?loc ?attrs a b c = mk ?loc ?attrs (Pcl_let (a, b, c))
+  let let_and ?loc ?attrs a b = mk ?loc ?attrs (Pcl_let_and (a, b))
+  let let_rec ?loc ?attrs a b = mk ?loc ?attrs (Pcl_let_rec (a, b))
   let constraint_ ?loc ?attrs a b = mk ?loc ?attrs (Pcl_constraint (a, b))
   let extension ?loc ?attrs a = mk ?loc ?attrs (Pcl_extension a)
 end

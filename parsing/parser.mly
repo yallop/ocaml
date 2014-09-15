@@ -828,7 +828,9 @@ class_expr:
   | class_simple_expr simple_labeled_expr_list
       { mkclass(Pcl_apply($1, List.rev $2)) }
   | LET rec_flag let_bindings_no_attrs IN class_expr
-      { mkclass(Pcl_let ($2, List.rev $3, $5)) }
+      { match $2 with
+        | Recursive -> mkclass(Pcl_let_rec (List.rev $3, $5))
+        | Nonrecursive -> mkclass(Pcl_let_and (List.rev $3, $5)) }
   | class_expr attribute
       { Cl.attr $1 $2 }
   | extension

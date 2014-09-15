@@ -510,10 +510,12 @@ and untype_class_expr cexpr =
               | Some exp -> (label, untype_expression exp) :: list
           ) args [])
 
-    | Tcl_let (rec_flat, bindings, _ivars, cl) ->
-        Pcl_let (rec_flat,
-          List.map untype_binding bindings,
-          untype_class_expr cl)
+    | Tcl_let (Nonrecursive, bindings, _ivars, cl) ->
+         Pcl_let_and (List.map untype_binding bindings,
+                      untype_class_expr cl)
+    | Tcl_let (Recursive, bindings, _ivars, cl) ->
+         Pcl_let_rec (List.map untype_binding bindings,
+                      untype_class_expr cl)
 
     | Tcl_constraint (cl, Some clty, _vals, _meths, _concrs) ->
         Pcl_constraint (untype_class_expr cl,  untype_class_type clty)
