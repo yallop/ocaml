@@ -660,9 +660,9 @@ and transl_exp0 e =
   | Texp_constant cst ->
       Lconst(Const_base cst)
   | Texp_let_and(pat_expr_list, body) ->
-      transl_let Nonrecursive pat_expr_list (event_before body (transl_exp body))
+      transl_letand pat_expr_list (event_before body (transl_exp body))
   | Texp_let_rec(pat_expr_list, body) ->
-      transl_let Recursive pat_expr_list (event_before body (transl_exp body))
+      transl_letrec pat_expr_list (event_before body (transl_exp body))
   | Texp_function (_, pat_expr_list, partial) ->
       let ((kind, params), body) =
         event_function e
@@ -1045,29 +1045,31 @@ and transl_function loc untuplify_fn repr partial cases =
        Matching.for_function loc repr (Lvar param)
          (transl_cases cases) partial)
 
+and transl_letand pat_expr_list body =
+  let rec transl = function
+      [] ->
+      body
+    | {vb_pat=pat; vb_expr=expr} :: rem ->
+       Matching.for_let pat.pat_loc (transl_exp expr) pat (transl rem)
+  in transl pat_expr_list
+and transl_letrec pat_expr_list body =
+  let idlist =
+    List.map
+      (fun {vb_pat=pat} -> match pat.pat_desc with
+          Tpat_var (id,_) -> id
+        | Tpat_alias ({pat_desc=Tpat_any}, id,_) -> id
+        | _ -> raise(Error(pat.pat_loc, Illegal_letrec_pat)))
+    pat_expr_list in
+  let transl_case {vb_pat=pat; vb_expr=expr} id =
+    let lam = transl_exp expr in
+    if not (check_recursive_lambda idlist lam) then
+      raise(Error(expr.exp_loc, Illegal_letrec_expr));
+    (id, lam) in
+  Lletrec(List.map2 transl_case pat_expr_list idlist, body)
 and transl_let rec_flag pat_expr_list body =
   match rec_flag with
-    Nonrecursive ->
-      let rec transl = function
-        [] ->
-          body
-      | {vb_pat=pat; vb_expr=expr} :: rem ->
-          Matching.for_let pat.pat_loc (transl_exp expr) pat (transl rem)
-      in transl pat_expr_list
-  | Recursive ->
-      let idlist =
-        List.map
-          (fun {vb_pat=pat} -> match pat.pat_desc with
-              Tpat_var (id,_) -> id
-            | Tpat_alias ({pat_desc=Tpat_any}, id,_) -> id
-            | _ -> raise(Error(pat.pat_loc, Illegal_letrec_pat)))
-        pat_expr_list in
-      let transl_case {vb_pat=pat; vb_expr=expr} id =
-        let lam = transl_exp expr in
-        if not (check_recursive_lambda idlist lam) then
-          raise(Error(expr.exp_loc, Illegal_letrec_expr));
-        (id, lam) in
-      Lletrec(List.map2 transl_case pat_expr_list idlist, body)
+    Nonrecursive -> transl_letand pat_expr_list body
+   | Recursive -> transl_letrec pat_expr_list body
 
 and transl_setinstvar self var expr =
   Lprim(Parraysetu (if maybe_pointer expr then Paddrarray else Pintarray),
