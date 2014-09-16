@@ -85,12 +85,6 @@ let fmt_closed_flag f x =
   | Closed -> fprintf f "Closed"
   | Open -> fprintf f "Open"
 
-let fmt_rec_flag f x =
-  match x with
-  | Nonrecursive -> fprintf f "Nonrec";
-  | Recursive -> fprintf f "Rec";
-;;
-
 let fmt_direction_flag f x =
   match x with
   | Upto -> fprintf f "Up";
@@ -750,8 +744,11 @@ and structure_item i ppf x =
       line i ppf "Pstr_eval\n";
       attributes i ppf attrs;
       expression i ppf e;
-  | Pstr_value (rf, l) ->
-      line i ppf "Pstr_value %a\n" fmt_rec_flag rf;
+  | Pstr_value (l) ->
+      line i ppf "Pstr_value\n";
+      list i value_binding ppf l;
+  | Pstr_value_rec (l) ->
+      line i ppf "Pstr_value_rec\n";
       list i value_binding ppf l;
   | Pstr_primitive vd ->
       line i ppf "Pstr_primitive\n";

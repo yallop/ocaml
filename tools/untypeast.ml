@@ -50,8 +50,10 @@ and untype_structure_item item =
   let desc =
     match item.str_desc with
       Tstr_eval (exp, attrs) -> Pstr_eval (untype_expression exp, attrs)
-    | Tstr_value (rec_flag, list) ->
-        Pstr_value (rec_flag, List.map untype_binding list)
+    | Tstr_value (Nonrecursive, list) ->
+        Pstr_value (List.map untype_binding list)
+    | Tstr_value (Recursive, list) ->
+        Pstr_value_rec (List.map untype_binding list)
     | Tstr_primitive vd ->
         Pstr_primitive (untype_value_description vd)
     | Tstr_type list ->

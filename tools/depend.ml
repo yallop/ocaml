@@ -295,8 +295,10 @@ and add_struct_item bv item =
   match item.pstr_desc with
     Pstr_eval (e, _attrs) ->
       add_expr bv e; bv
-  | Pstr_value(rf, pel) ->
-      let bv = add_bindings rf bv pel in bv
+  | Pstr_value pel ->
+     add_bindings Nonrecursive bv pel
+  | Pstr_value_rec pel ->
+     add_bindings Recursive bv pel
   | Pstr_primitive vd ->
       add_type bv vd.pval_type; bv
   | Pstr_type dcls ->

@@ -1200,25 +1200,33 @@ and type_structure ?(toplevel = false) funct_body anchor env sstr scope =
     | Pstr_eval (sexpr, attrs) ->
         let expr = Typecore.type_expression env sexpr in
         Tstr_eval (expr, attrs), [], env
-    | Pstr_value(rec_flag, sdefs) ->
+    | Pstr_value sdefs ->
         let scope =
-          match rec_flag with
-          | Recursive ->
-              Some (Annot.Idef {scope with
-                                Location.loc_start = loc.Location.loc_start})
-          | Nonrecursive ->
-              let start =
-                match srem with
-                | [] -> loc.Location.loc_end
-                | {pstr_loc = loc2} :: _ -> loc2.Location.loc_start
-              in
-              Some (Annot.Idef {scope with Location.loc_start = start})
+          let start =
+            match srem with
+            | [] -> loc.Location.loc_end
+            | {pstr_loc = loc2} :: _ -> loc2.Location.loc_start
+          in
+          Some (Annot.Idef {scope with Location.loc_start = start})
         in
         let (defs, newenv) =
-          Typecore.type_binding env rec_flag sdefs scope in
+          Typecore.type_binding env Nonrecursive sdefs scope in
         (* Note: Env.find_value does not trigger the value_used event. Values
            will be marked as being used during the signature inclusion test. *)
-        Tstr_value(rec_flag, defs),
+        Tstr_value(Nonrecursive, defs),
+        List.map (fun id -> Sig_value(id, Env.find_value (Pident id) newenv))
+          (let_bound_idents defs),
+        newenv
+    | Pstr_value_rec sdefs ->
+        let scope =
+          Some (Annot.Idef {scope with
+                            Location.loc_start = loc.Location.loc_start})
+        in
+        let (defs, newenv) =
+          Typecore.type_binding env Recursive sdefs scope in
+        (* Note: Env.find_value does not trigger the value_used event. Values
+           will be marked as being used during the signature inclusion test. *)
+        Tstr_value(Recursive, defs),
         List.map (fun id -> Sig_value(id, Env.find_value (Pident id) newenv))
           (let_bound_idents defs),
         newenv

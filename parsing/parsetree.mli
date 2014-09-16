@@ -763,10 +763,10 @@ and structure_item =
 and structure_item_desc =
   | Pstr_eval of expression * attributes
         (* E *)
-  | Pstr_value of rec_flag * value_binding list
-        (* let P1 = E1 and ... and Pn = EN       (flag = Nonrecursive)
-           let rec P1 = E1 and ... and Pn = EN   (flag = Recursive)
-         *)
+  | Pstr_value of value_binding list
+        (* let P1 = E1 and ... and Pn = EN *)
+  | Pstr_value_rec of value_binding list
+        (* let rec P1 = E1 and ... and Pn = EN *)
   | Pstr_primitive of value_description
         (* external x: T = "s1" ... "sn" *)
   | Pstr_type of type_declaration list

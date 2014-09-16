@@ -1097,8 +1097,12 @@ module Analyser =
       | Parsetree.Pstr_attribute _
       | Parsetree.Pstr_extension _ ->
           (0, env, [])
-      | Parsetree.Pstr_value (rec_flag, pat_exp_list) ->
-          (* of rec_flag * (pattern * expression) list *)
+      | Parsetree.Pstr_value pat_exp_list
+      | Parsetree.Pstr_value_rec pat_exp_list ->
+         let rec_flag = match parsetree_item_desc with
+             Parsetree.Pstr_value _ -> Nonrecursive
+           | _ -> Recursive
+         in
           (* For each value, look for the value name, then look in the
              typedtree for the corresponding information,
              at last analyse this information to build the value *)

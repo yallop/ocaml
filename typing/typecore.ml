@@ -182,7 +182,8 @@ let iter_expression f e =
   and structure_item str =
     match str.pstr_desc with
     | Pstr_eval (e, _) -> expr e
-    | Pstr_value (_, pel) -> List.iter binding pel
+    | Pstr_value pel
+    | Pstr_value_rec pel -> List.iter binding pel
     | Pstr_primitive _
     | Pstr_type _
     | Pstr_typext _

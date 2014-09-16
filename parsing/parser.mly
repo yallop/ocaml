@@ -630,7 +630,11 @@ structure_item:
             let exp = wrap_exp_attrs exp $2 in
             mkstr(Pstr_eval (exp, attrs))
         | l ->
-            let str = mkstr(Pstr_value($3, List.rev l)) in
+            let str =
+               match $3 with
+                 Recursive -> mkstr(Pstr_value_rec(List.rev l))
+               | Nonrecursive -> mkstr(Pstr_value(List.rev l))
+            in
             let (ext, attrs) = $2 in
             if attrs <> [] then not_expecting 2 "attribute";
             match ext with
