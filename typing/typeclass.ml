@@ -1114,7 +1114,7 @@ and class_expr cl_num val_env met_env scl =
           ([], met_env)
       in
       let cl = class_expr cl_num val_env met_env scl' in
-      rc {cl_desc = Tcl_let (Nonrecursive, defs, vals, cl);
+      rc {cl_desc = Tcl_let_and (defs, vals, cl);
           cl_loc = scl.pcl_loc;
           cl_type = cl.cl_type;
           cl_env = val_env;
@@ -1160,7 +1160,7 @@ and class_expr cl_num val_env met_env scl =
           ([], met_env)
       in
       let cl = class_expr cl_num val_env met_env scl' in
-      rc {cl_desc = Tcl_let (Recursive, defs, vals, cl);
+      rc {cl_desc = Tcl_let_rec (defs, vals, cl);
           cl_loc = scl.pcl_loc;
           cl_type = cl.cl_type;
           cl_env = val_env;
@@ -1688,7 +1688,8 @@ let rec unify_parents env ty cl =
   | Tcl_structure st -> unify_parents_struct env ty st
   | Tcl_fun (_, _, _, cl, _)
   | Tcl_apply (cl, _)
-  | Tcl_let (_, _, _, cl)
+  | Tcl_let_and (_, _, cl)
+  | Tcl_let_rec (_, _, cl)
   | Tcl_constraint (cl, _, _, _, _) -> unify_parents env ty cl
 and unify_parents_struct env ty st =
   List.iter

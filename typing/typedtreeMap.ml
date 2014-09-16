@@ -536,8 +536,13 @@ module MakeMap(Map : MapArgument) = struct
                        (label, may_map map_expression expo,
                         optional)
                      ) args)
-        | Tcl_let (rec_flat, bindings, ivars, cl) ->
-          Tcl_let (rec_flat, map_bindings bindings,
+        | Tcl_let_and (bindings, ivars, cl) ->
+          Tcl_let_and (map_bindings bindings,
+                   List.map (fun (id, name, exp) ->
+                     (id, name, map_expression exp)) ivars,
+                   map_class_expr cl)
+        | Tcl_let_rec (bindings, ivars, cl) ->
+          Tcl_let_rec (map_bindings bindings,
                    List.map (fun (id, name, exp) ->
                      (id, name, map_expression exp)) ivars,
                    map_class_expr cl)

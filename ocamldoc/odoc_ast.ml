@@ -754,8 +754,10 @@ module Analyser =
                  (
                   (* there must be a Tcl_let just after *)
                   match tt_class_expr2.Typedtree.cl_desc with
-                    Typedtree.Tcl_let (_, {vb_pat={pat_desc = Typedtree.Tpat_var (id,_) };
-                                           vb_expr=exp} :: _, _, tt_class_expr3) ->
+                    Typedtree.Tcl_let_and ({vb_pat={pat_desc = Typedtree.Tpat_var (id,_) };
+                                               vb_expr=exp} :: _, _, tt_class_expr3)
+                  | Typedtree.Tcl_let_rec ({vb_pat={pat_desc = Typedtree.Tpat_var (id,_) };
+                                               vb_expr=exp} :: _, _, tt_class_expr3) ->
                       let name = Name.from_ident id in
                       let new_param = Simple_name
                           { sn_name = name ;
@@ -824,8 +826,8 @@ module Analyser =
                capp_params_code = params_code ;
              } )
 
-      | ((Parsetree.Pcl_let_and (_, p_class_expr2)
-        | Parsetree.Pcl_let_rec (_, p_class_expr2)), Typedtree.Tcl_let (_, _, _, tt_class_expr2)) ->
+      | ((Parsetree.Pcl_let_and (_, p_class_expr2), Typedtree.Tcl_let_and (_, _, tt_class_expr2))
+      |  (Parsetree.Pcl_let_rec (_, p_class_expr2), Typedtree.Tcl_let_rec (_, _, tt_class_expr2))) ->
           (* we don't care about these lets *)
           analyse_class_kind
               env current_class_name comment_opt last_pos p_class_expr2

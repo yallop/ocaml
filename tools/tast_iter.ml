@@ -262,8 +262,12 @@ let class_expr sub cexpr =
   | Tcl_apply (cl, args) ->
       sub # class_expr cl;
       List.iter (fun (_label, expo, _) -> opt (sub # expression) expo) args
-  | Tcl_let (rec_flat, bindings, ivars, cl) ->
-      sub # bindings (rec_flat, bindings);
+  | Tcl_let_and (bindings, ivars, cl) ->
+      sub # bindings (Asttypes.Nonrecursive, bindings);
+      List.iter (fun (_id, _, exp) -> sub # expression exp) ivars;
+      sub # class_expr cl
+  | Tcl_let_rec (bindings, ivars, cl) ->
+      sub # bindings (Asttypes.Recursive, bindings);
       List.iter (fun (_id, _, exp) -> sub # expression exp) ivars;
       sub # class_expr cl
   | Tcl_constraint (cl, Some clty, _vals, _meths, _concrs) ->

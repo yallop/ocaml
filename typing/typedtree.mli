@@ -135,8 +135,10 @@ and class_expr_desc =
       label * pattern * (Ident.t * string loc * expression) list * class_expr *
         partial
   | Tcl_apply of class_expr * (label * expression option * optional) list
-  | Tcl_let of rec_flag * value_binding list *
-                  (Ident.t * string loc * expression) list * class_expr
+  | Tcl_let_and of value_binding list *
+                     (Ident.t * string loc * expression) list * class_expr
+  | Tcl_let_rec of value_binding list *
+                     (Ident.t * string loc * expression) list * class_expr
   | Tcl_constraint of
       class_expr * class_type option * string list * string list * Concr.t
     (* Visible instance variables, methods and concretes methods *)

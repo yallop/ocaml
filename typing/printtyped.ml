@@ -526,8 +526,13 @@ and class_expr i ppf x =
       line i ppf "Pcl_apply\n";
       class_expr i ppf ce;
       list i label_x_expression ppf l;
-  | Tcl_let (rf, l1, l2, ce) ->
-      line i ppf "Pcl_let %a\n" fmt_rec_flag rf;
+  | Tcl_let_and ( l1, l2, ce) ->
+      line i ppf "Pcl_let_and\n";
+      list i value_binding ppf l1;
+      list i ident_x_loc_x_expression_def ppf l2;
+      class_expr i ppf ce;
+  | Tcl_let_rec (l1, l2, ce) ->
+      line i ppf "Pcl_let_rec\n";
       list i value_binding ppf l1;
       list i ident_x_loc_x_expression_def ppf l2;
       class_expr i ppf ce;

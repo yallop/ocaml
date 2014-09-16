@@ -477,8 +477,13 @@ module MakeIterator(Iter : IteratorArgument) : sig
                 | Some exp -> iter_expression exp
             ) args
 
-        | Tcl_let (rec_flat, bindings, ivars, cl) ->
-          iter_bindings rec_flat bindings;
+        | Tcl_let_and (bindings, ivars, cl) ->
+          iter_bindings Nonrecursive bindings;
+          List.iter (fun (id, _, exp) -> iter_expression exp) ivars;
+            iter_class_expr cl
+
+        | Tcl_let_rec (bindings, ivars, cl) ->
+          iter_bindings Recursive bindings;
           List.iter (fun (id, _, exp) -> iter_expression exp) ivars;
             iter_class_expr cl
 
