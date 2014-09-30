@@ -102,7 +102,8 @@ module Typedtree_search =
                 (CT (Name.from_ident id))
                 (Typedtree.Tstr_class_type [ci]))
             info_list
-      | Typedtree.Tstr_value (_, pat_exp_list) ->
+      | Typedtree.Tstr_value pat_exp_list
+      | Typedtree.Tstr_value_rec pat_exp_list ->
           List.iter
             (fun {vb_pat=pat; vb_expr=exp} ->
               match iter_val_pattern pat.Typedtree.pat_desc with

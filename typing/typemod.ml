@@ -857,7 +857,8 @@ and closed_signature_item = function
 
 let check_nongen_scheme env str =
   match str.str_desc with
-    Tstr_value(rec_flag, pat_exp_list) ->
+    Tstr_value pat_exp_list
+  | Tstr_value_rec pat_exp_list ->
       List.iter
         (fun {vb_expr=exp} ->
           if not (Ctype.closed_schema exp.exp_type) then
@@ -1213,7 +1214,7 @@ and type_structure ?(toplevel = false) funct_body anchor env sstr scope =
           Typecore.type_binding env Nonrecursive sdefs scope in
         (* Note: Env.find_value does not trigger the value_used event. Values
            will be marked as being used during the signature inclusion test. *)
-        Tstr_value(Nonrecursive, defs),
+        Tstr_value defs,
         List.map (fun id -> Sig_value(id, Env.find_value (Pident id) newenv))
           (let_bound_idents defs),
         newenv
@@ -1226,7 +1227,7 @@ and type_structure ?(toplevel = false) funct_body anchor env sstr scope =
           Typecore.type_binding env Recursive sdefs scope in
         (* Note: Env.find_value does not trigger the value_used event. Values
            will be marked as being used during the signature inclusion test. *)
-        Tstr_value(Recursive, defs),
+        Tstr_value_rec defs,
         List.map (fun id -> Sig_value(id, Env.find_value (Pident id) newenv))
           (let_bound_idents defs),
         newenv

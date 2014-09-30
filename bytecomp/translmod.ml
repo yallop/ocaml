@@ -381,9 +381,13 @@ and transl_structure fields cc rootpath = function
       match item.str_desc with
       | Tstr_eval (expr, _) ->
       Lsequence(transl_exp expr, transl_structure fields cc rootpath rem)
-  | Tstr_value(rec_flag, pat_expr_list) ->
+  | Tstr_value pat_expr_list ->
       let ext_fields = rev_let_bound_idents pat_expr_list @ fields in
-      transl_let rec_flag pat_expr_list
+      transl_let Nonrecursive pat_expr_list
+                 (transl_structure ext_fields cc rootpath rem)
+  | Tstr_value_rec pat_expr_list ->
+      let ext_fields = rev_let_bound_idents pat_expr_list @ fields in
+      transl_let Recursive pat_expr_list
                  (transl_structure ext_fields cc rootpath rem)
   | Tstr_primitive descr ->
       record_primitive descr.val_val;
@@ -470,7 +474,8 @@ let rec defined_idents = function
   | item :: rem ->
     match item.str_desc with
     | Tstr_eval (expr, _) -> defined_idents rem
-    | Tstr_value(rec_flag, pat_expr_list) ->
+    | Tstr_value pat_expr_list
+    | Tstr_value_rec pat_expr_list ->
       let_bound_idents pat_expr_list @ defined_idents rem
     | Tstr_primitive desc -> defined_idents rem
     | Tstr_type decls -> defined_idents rem
@@ -497,7 +502,8 @@ let rec more_idents = function
   | item :: rem ->
     match item.str_desc with
     | Tstr_eval (expr, _attrs) -> more_idents rem
-    | Tstr_value(rec_flag, pat_expr_list) -> more_idents rem
+    | Tstr_value pat_expr_list
+    | Tstr_value_rec pat_expr_list -> more_idents rem
     | Tstr_primitive _ -> more_idents rem
     | Tstr_type decls -> more_idents rem
     | Tstr_typext tyext -> more_idents rem
@@ -518,7 +524,8 @@ and all_idents = function
   | item :: rem ->
     match item.str_desc with
     | Tstr_eval (expr, _attrs) -> all_idents rem
-    | Tstr_value(rec_flag, pat_expr_list) ->
+    | Tstr_value pat_expr_list
+    | Tstr_value_rec pat_expr_list ->
       let_bound_idents pat_expr_list @ all_idents rem
     | Tstr_primitive _ -> all_idents rem
     | Tstr_type decls -> all_idents rem
@@ -571,9 +578,14 @@ let transl_store_structure glob map prims str =
   | Tstr_eval (expr, _attrs) ->
       Lsequence(subst_lambda subst (transl_exp expr),
                 transl_store rootpath subst rem)
-  | Tstr_value(rec_flag, pat_expr_list) ->
+  | Tstr_value pat_expr_list ->
       let ids = let_bound_idents pat_expr_list in
-      let lam = transl_let rec_flag pat_expr_list (store_idents ids) in
+      let lam = transl_let Nonrecursive pat_expr_list (store_idents ids) in
+      Lsequence(subst_lambda subst lam,
+                transl_store rootpath (add_idents false ids subst) rem)
+  | Tstr_value_rec pat_expr_list ->
+      let ids = let_bound_idents pat_expr_list in
+      let lam = transl_let Recursive pat_expr_list (store_idents ids) in
       Lsequence(subst_lambda subst lam,
                 transl_store rootpath (add_idents false ids subst) rem)
   | Tstr_primitive descr ->
@@ -797,9 +809,13 @@ let transl_toplevel_item item =
   match item.str_desc with
     Tstr_eval (expr, _attrs) ->
       transl_exp expr
-  | Tstr_value(rec_flag, pat_expr_list) ->
+  | Tstr_value pat_expr_list ->
       let idents = let_bound_idents pat_expr_list in
-      transl_let rec_flag pat_expr_list
+      transl_let Nonrecursive pat_expr_list
+                 (make_sequence toploop_setvalue_id idents)
+  | Tstr_value_rec pat_expr_list ->
+      let idents = let_bound_idents pat_expr_list in
+      transl_let Recursive pat_expr_list
                  (make_sequence toploop_setvalue_id idents)
   | Tstr_typext(tyext) ->
       let idents =

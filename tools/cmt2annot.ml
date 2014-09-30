@@ -12,7 +12,6 @@
 
 (* Generate an .annot file from a .cmt file. *)
 
-open Asttypes
 open Typedtree
 
 let bind_variables scope =
@@ -104,14 +103,17 @@ let iterator rebuild_env =
 
     method private structure_item_rem s rem =
       begin match s with
-      | {str_desc = Tstr_value (rec_flag, bindings); str_loc = loc} ->
+      | {str_desc = Tstr_value bindings; str_loc = loc} ->
           let open Location in
           let doit loc_start = bind_bindings {scope with loc_start} bindings in
-          begin match rec_flag, rem with
-          | Recursive, _ -> doit loc.loc_start
-          | Nonrecursive, [] -> doit loc.loc_end
-          | Nonrecursive,  {str_loc = loc2} :: _ -> doit loc2.loc_start
+          begin match rem with
+          | [] -> doit loc.loc_end
+          | {str_loc = loc2} :: _ -> doit loc2.loc_start
           end
+      | {str_desc = Tstr_value_rec bindings; str_loc = loc} ->
+          let open Location in
+          let doit loc_start = bind_bindings {scope with loc_start} bindings in
+	  doit loc.loc_start
       | _ ->
           ()
       end;

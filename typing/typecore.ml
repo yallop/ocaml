@@ -1450,7 +1450,8 @@ and is_nonexpansive_mod mexp =
         (fun item -> match item.str_desc with
           | Tstr_eval _ | Tstr_primitive _ | Tstr_type _
           | Tstr_modtype _ | Tstr_open _ | Tstr_class_type _  -> true
-          | Tstr_value (_, pat_exp_list) ->
+          | Tstr_value pat_exp_list
+          | Tstr_value_rec pat_exp_list ->
               List.for_all (fun vb -> is_nonexpansive vb.vb_expr) pat_exp_list
           | Tstr_module {mb_expr=m;_}
           | Tstr_include {incl_mod=m;_} -> is_nonexpansive_mod m

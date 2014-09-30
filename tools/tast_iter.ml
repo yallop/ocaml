@@ -20,7 +20,8 @@ let structure sub str =
 let structure_item sub x =
   match x.str_desc with
   | Tstr_eval (exp, _attrs) -> sub # expression exp
-  | Tstr_value (rec_flag, list) -> sub # bindings (rec_flag, list)
+  | Tstr_value list -> sub # bindings (Asttypes.Nonrecursive, list)
+  | Tstr_value_rec list -> sub # bindings (Asttypes.Recursive, list)
   | Tstr_primitive v -> sub # value_description v
   | Tstr_type list -> List.iter (sub # type_declaration) list
   | Tstr_typext te -> sub # type_extension te
