@@ -282,6 +282,21 @@ let wrap_type_annotation newtypes core_type body =
   in
   (exp, ghtyp(Ptyp_poly(newtypes,varify_constructors newtypes core_type)))
 
+    (* NNN: the whole definition *)
+let let_operator op bindings cont =
+  let pat, expr =
+    match bindings with
+    | []   -> assert false
+    | [x]  -> (x.pvb_pat,x.pvb_expr)
+    | l    -> 
+        let pats, exprs = 
+          List.fold_right
+            (fun {pvb_pat=p;pvb_expr=e} (ps,es) -> (p::ps,e::es)) l ([],[]) in
+        ghpat (Ppat_tuple pats), ghexp (Pexp_tuple exprs)
+    in
+      mkexp(Pexp_apply(op, [("", expr); 
+                            ("", ghexp(Pexp_fun("", None, pat, cont)))]))
+
 let wrap_exp_attrs body (ext, attrs) =
   (* todo: keep exact location for the entire attribute *)
   let body = {body with pexp_attributes = attrs @ body.pexp_attributes} in
@@ -399,6 +414,9 @@ let class_of_let_bindings lbs body =
 
 /* Tokens */
 
+%token DOTLESS     /* NNN */
+%token GREATERDOT  /* NNN */
+%token DOTTILDE    /* NNN */
 %token AMPERAMPER
 %token AMPERSAND
 %token AND
@@ -465,6 +483,7 @@ let class_of_let_bindings lbs body =
 %token LESS
 %token LESSMINUS
 %token LET
+%token <string> LETOP /* NNN */
 %token <string> LIDENT
 %token LPAREN
 %token LBRACKETAT
@@ -551,6 +570,7 @@ The precedences must be listed from low to high.
 %nonassoc below_SEMI
 %nonassoc SEMI                          /* below EQUAL ({lbl=...; lbl=...}) */
 %nonassoc LET                           /* above SEMI ( ...; let ... in ...) */
+%nonassoc LETOP           /* NNN */
 %nonassoc below_WITH
 %nonassoc FUNCTION WITH                 /* below BAR  (match ... with ...) */
 %nonassoc AND             /* above WITH (module rec A: SIG with ... and ...) */
@@ -578,6 +598,7 @@ The precedences must be listed from low to high.
 %nonassoc prec_unary_minus prec_unary_plus /* unary - */
 %nonassoc prec_constant_constructor     /* cf. simple_expr (C versus C x) */
 %nonassoc prec_constr_appl              /* above AS BAR COLONCOLON COMMA */
+%left	  prec_escape    /* NNN */
 %nonassoc below_SHARP
 %nonassoc SHARP SHARPOP                 /* simple_expr/toplevel_directive */
 %left     SHARPOP
@@ -1246,6 +1267,8 @@ expr:
       { mkexp(Pexp_apply($1, List.rev $2)) }
   | let_bindings IN seq_expr
       { expr_of_let_bindings $1 $3 }
+  | let_operator ext_attributes let_bindings IN seq_expr     /* NNN */
+      { wrap_exp_attrs (let_operator $1 $3 $5) $2 }          /* NNN */
   | LET MODULE ext_attributes UIDENT module_binding_body IN seq_expr
       { mkexp_attrs (Pexp_letmodule(mkrhs $4 4, $5, $7)) $3 }
   | LET OPEN override_flag ext_attributes mod_longident IN seq_expr
@@ -1362,6 +1385,12 @@ simple_expr:
       { reloc_exp $2 }
   | LPAREN seq_expr error
       { unclosed "(" 1 ")" 3 }
+  | DOTLESS expr GREATERDOT                 /* NNN */
+      { wrap_exp_attrs $2 
+           (None,[ghloc "metaocaml.bracket",PStr []]) }            /* NNN */
+  | DOTTILDE simple_expr %prec prec_escape  /* NNN */
+      { wrap_exp_attrs $2 
+           (None,[ghloc "metaocaml.escape",PStr []]) }             /* NNN */
   | BEGIN ext_attributes seq_expr END
       { wrap_exp_attrs (reloc_exp $3) $2 (* check location *) }
   | BEGIN ext_attributes END
@@ -2207,6 +2236,7 @@ operator:
   | INFIXOP3                                    { $1 }
   | INFIXOP4                                    { $1 }
   | SHARPOP                                     { $1 }
+  | LETOP                                       { $1 } /* NNN */
   | BANG                                        { "!" }
   | PLUS                                        { "+" }
   | PLUSDOT                                     { "+." }
@@ -2228,6 +2258,7 @@ operator:
 index_operator:
     DOT index_operator_core opt_assign_arrow { $2^$3 }
 ;
+
 index_operator_core:
   | LPAREN RPAREN                               { ".()" }
   | LBRACKET RBRACKET                           { ".[]" }
@@ -2240,6 +2271,16 @@ index_operator_core:
 opt_assign_arrow:
 	                                        { "" }
   | LESSMINUS                                   { "<-" }
+;
+
+    /* NNN: the whole definition */
+let_operator:
+    LETOP                                   { mkexp (Pexp_ident(
+                                                     mkloc (Lident $1)
+                                                           (symbol_rloc ()))) }
+  | mod_longident DOT LETOP                 { mkexp (Pexp_ident(
+                                                     mkloc (Ldot($1,$3))
+                                                           (symbol_rloc ()))) }
 ;
 
 constr_ident:
