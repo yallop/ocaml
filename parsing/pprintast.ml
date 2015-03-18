@@ -47,6 +47,8 @@ let fixity_of_string  = function
 
 let view_fixity_of_exp = function
   | {pexp_desc = Pexp_ident {txt=Lident l;_};_} -> fixity_of_string l
+  | {pexp_desc = Pexp_ident {txt=Ldot (Lident "Pervasives",l);_};_} ->  (*NNN*)
+      fixity_of_string l                                                (*NNN*)
   | _ -> `Normal  ;;
 
 let is_infix  = function  | `Infix _ -> true | _  -> false
@@ -509,11 +511,44 @@ class printer  ()= object(self:'self)
            end
     | _ -> false
   method expression f x =
-    if x.pexp_attributes <> [] then begin
+    (* NNN begin *)
+    (* Keep in mind that there may be several metaocaml
+       attributes, and the order matters *)
+    (* Here we assume that all metaocaml attributes are at the front,
+       which is how they are generated.
+    *)
+    match x.pexp_attributes with
+    | ({txt="metaocaml.bracket"},_) :: t ->
+        pp f "@[<hov2>.<@ %a @ >.@]" self#expression {x with pexp_attributes=t}
+    | ({txt="metaocaml.escape"},_) :: t ->
+        begin
+        match x.pexp_desc with
+        | Pexp_ident li when t = [] -> pp f ".~%a" self#longident_loc li
+        | _ -> pp f ".~%a" (self#paren true self#expression)
+                              {x with pexp_attributes=t}
+        end
+    | [({txt = "metaocaml.csp"},PStr [{pstr_desc = 
+            Pstr_eval ({pexp_desc=Pexp_ident li},_)}])] -> 
+              begin
+                (* This CSP is easy to print, so we print it *)
+                match x.pexp_desc with
+                | Pexp_apply (_,[("",{pexp_desc=Pexp_constant (Const_int _)})])
+                    -> 
+                      pp f "(* CSP %a *) %a"
+                        self#longident_loc li
+                        self#expression {x with pexp_attributes=[]}
+                | _ -> 
+                      pp f "(* CSP %a *)"
+                        self#longident_loc li
+              end
+    (* if x.pexp_attributes <> [] then begin *)
+    | _::_ ->
       pp f "((%a)%a)" self#expression {x with pexp_attributes=[]}
         self#attributes x.pexp_attributes
-    end
-    else match x.pexp_desc with
+    (* end *)
+    | _ -> begin match x.pexp_desc with
+    (* else match x.pexp_desc with *)
+    (* NNN end *)
     | Pexp_function _ | Pexp_fun _ | Pexp_match _ | Pexp_try _ | Pexp_sequence _
       when pipe || semi ->
         self#paren true self#reset#expression f x
@@ -617,6 +652,7 @@ class printer  ()= object(self:'self)
         pp f "@[<2>`%s@;%a@]" l  self#simple_expr eo
     | Pexp_extension e -> self#extension f e
     | _ -> self#expression1 f x
+   end (* NNN *)
   method expression1 f x =
     if x.pexp_attributes <> [] then self#expression f x
     else match x.pexp_desc with
