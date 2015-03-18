@@ -274,6 +274,8 @@ let identchar_latin1 =
   ['A'-'Z' 'a'-'z' '_' '\192'-'\214' '\216'-'\246' '\248'-'\255' '\'' '0'-'9']
 let symbolchar =
   ['!' '$' '%' '&' '*' '+' '-' '.' '/' ':' '<' '=' '>' '?' '@' '^' '|' '~']
+let symbolcharnodot =                                                  (* NNN *)
+ ['!' '$' '%' '&' '*' '+' '-' '/' ':' '<' '=' '>' '?' '@' '^' '|' '~'] (* NNN *)
 let decimal_literal =
   ['0'-'9'] ['0'-'9' '_']*
 let hex_literal =
@@ -306,6 +308,9 @@ rule token = parse
       }
   | blank +
       { token lexbuf }
+  | ".<" { DOTLESS }     (* NNN *)
+  | ">." { GREATERDOT }  (* NNN *)
+  | ".~" { DOTTILDE }    (* NNN *)
   | "_"
       { UNDERSCORE }
   | "~"
@@ -478,8 +483,10 @@ rule token = parse
             { PREFIXOP(Lexing.lexeme lexbuf) }
   | ['~' '?'] symbolchar +
             { PREFIXOP(Lexing.lexeme lexbuf) }
-  | ['=' '<' '>' '|' '&' '$'] symbolchar *
+  | ['=' '<' '|' '&' '$'] symbolchar *	         (* NNN: ">." is not INFIXOP0 *)
             { INFIXOP0(Lexing.lexeme lexbuf) }
+  | ['>'] symbolcharnodot symbolchar *           (* NNN exclude ">." case *)
+            { INFIXOP0(Lexing.lexeme lexbuf) }   (* NNN *)
   | ['@' '^'] symbolchar *
             { INFIXOP1(Lexing.lexeme lexbuf) }
   | ['+' '-'] symbolchar *
@@ -491,6 +498,8 @@ rule token = parse
             { INFIXOP3(Lexing.lexeme lexbuf) }
   | '#' (symbolchar | '#') +
             { SHARPOP(Lexing.lexeme lexbuf) }
+  | "let" symbolchar*                            (* NNN *)
+            { LETOP(Lexing.lexeme lexbuf) }      (* NNN *)
   | eof { EOF }
   | _
       { raise (Error(Illegal_character (Lexing.lexeme_char lexbuf 0),
