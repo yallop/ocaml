@@ -101,6 +101,8 @@ val set_with_stack_mark : stackmark_region_fn -> unit
 
 val loc_none : Location.t
 val sample_lid  : Longident.t Location.loc  (* A template for lid expressions *)
+val sample_arrow_flag  : Types.arrow_flag
+val sample_apply_flag  : Types.apply_flag
 val sample_name : string Location.loc
 val sample_pat_list : Parsetree.pattern list
 val sample_pats_names : Parsetree.pattern list * string Location.loc list
@@ -121,7 +123,7 @@ val build_escape   : Location.t -> code_repr -> code_repr
 val build_sequence : Location.t -> code_repr -> code_repr -> code_repr
 val build_while    : Location.t -> code_repr -> code_repr -> code_repr
 
-val build_apply : Location.t -> (Asttypes.label * code_repr) array -> code_repr
+val build_apply : Location.t -> (Parsetree.apply_flag * code_repr) array -> code_repr
 
 val build_tuple : Location.t -> code_repr array -> code_repr
 val build_array : Location.t -> code_repr array -> code_repr
@@ -139,13 +141,13 @@ val build_setfield :
 val build_variant  : Location.t -> string -> code_repr option -> code_repr
 val build_send     : Location.t -> code_repr -> string -> code_repr
 val build_open :
-  Location.t -> Longident.t Location.loc -> Asttypes.override_flag -> 
+  Location.t -> Longident.t Location.loc -> Asttypes.open_flag -> 
   code_repr -> code_repr
 val build_fun_nonbinding : 
-  Location.t -> string -> Parsetree.pattern list -> 
+  Location.t -> Parsetree.arrow_flag -> Parsetree.pattern list -> 
   (code_repr option * code_repr) array -> code_repr
 val build_fun_simple : 
-  Location.t -> string -> string Location.loc -> 
+  Location.t -> Parsetree.arrow_flag -> string Location.loc -> 
   (code_repr -> code_repr) -> code_repr
 val build_for : 
   Location.t -> string Location.loc -> code_repr -> code_repr -> 
@@ -154,7 +156,7 @@ val build_let_simple_nonrec :
   Location.t -> string Location.loc -> code_repr -> 
     (code_repr -> code_repr) -> code_repr
 val build_fun : 
-  Location.t -> string -> 
+  Location.t -> Parsetree.arrow_flag -> 
   (Parsetree.pattern list * string Location.loc list) -> 
   (code_repr array -> (code_repr option * code_repr) array) -> code_repr
 val build_let : 

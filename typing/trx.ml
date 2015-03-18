@@ -430,6 +430,9 @@ let dummy_lid : string -> Longident.t loc = fun name ->
 (* Exported. Used as a template for constructing lid expressions *)
 let sample_lid = dummy_lid "*sample*"
 
+let sample_arrow_flag = Types.Tarr_simple
+let sample_apply_flag = Types.Tapp_simple
+
 (* Exported. Used as a template for constructing name expression *)
 let sample_name : string loc = mknoloc "*sample*"
 
@@ -506,7 +509,8 @@ let texp_ident : string -> expression = fun name ->
 (* Building an application *)
 let texp_apply : Typedtree.expression -> Typedtree.expression list -> 
  Typedtree.expression_desc = fun f args ->
-   Texp_apply(f, List.map (fun arg -> ("",Some arg, Required)) args)
+  Texp_apply(f, List.map (fun arg -> {arg_flag = Tapp_simple;
+                                      arg_expression = Some arg}) args)
 
 (* Compiling a string constant *)
 (* The second argument of Const_string is the delimiter,
@@ -562,6 +566,18 @@ let texp_string_loc : string loc -> Typedtree.expression = fun name ->
   let name_exp = texp_ident "Trx.sample_name" in
   {name_exp with
    exp_desc = (texp_csp (Obj.repr name)).exp_desc}
+
+(* Compiling an arrow flag *)
+let texp_arrow_flag : Types.arrow_flag -> Typedtree.expression =
+  fun flag ->
+    let flag_exp = texp_ident "Trx.sample_arrow_flag" in
+    {flag_exp with exp_desc = (texp_csp (Obj.repr flag)).exp_desc}
+
+(* Compiling an apply flag *)
+let texp_apply_flag : Types.apply_flag -> Typedtree.expression =
+  fun flag ->
+    let flag_exp = texp_ident "Trx.sample_apply_flag" in
+    {flag_exp with exp_desc = (texp_csp (Obj.repr flag)).exp_desc}
 
 (* Compiling an option *)
 (* For prototype, see Typecore.option_none *)
@@ -993,14 +1009,14 @@ let build_while : Location.t -> code_repr -> code_repr -> code_repr =
 
 (* Build the application. The first element in the array is the
    function. The others are arguments. *)
-let build_apply : Location.t -> (label * code_repr) array -> code_repr = 
+let build_apply : Location.t -> (Parsetree.apply_flag * code_repr) array -> code_repr = 
   fun loc ea -> 
     assert (Array.length ea > 1);
     match map_accum (fun vars (lbl,e) -> 
                    let Code (var,e) = validate_vars loc e in
                    ((lbl,e),merge var vars))
           Nil (Array.to_list ea) with
-    | (("",eh)::elt,vars) ->
+    | ((Papp_simple,eh)::elt,vars) ->
        Code (vars, 
              Ast_helper.Exp.apply ~loc eh elt)
     | _ -> assert false
@@ -1078,7 +1094,7 @@ let build_send : Location.t -> code_repr -> string -> code_repr =
         Ast_helper.Exp.send ~loc e l)
 
 let build_open :
- Location.t -> Longident.t loc -> override_flag -> code_repr -> code_repr =
+ Location.t -> Longident.t loc -> open_flag -> code_repr -> code_repr =
  fun loc l ovf e ->
   let Code (vars,e) = validate_vars loc e in
   Code (vars,
@@ -1086,7 +1102,7 @@ let build_open :
 
 (* Build a function with a non-binding pattern, such as fun () -> ... *)
 let build_fun_nonbinding : 
-  Location.t -> string -> Parsetree.pattern list -> 
+  Location.t -> Parsetree.arrow_flag -> Parsetree.pattern list -> 
   (code_repr option * code_repr) array -> code_repr =
   fun loc label pats gbodies -> 
   let (egbodies,vars) = 
@@ -1100,7 +1116,7 @@ let build_fun_nonbinding :
         match (egbodies,pats) with
         | ([(None,e)],[p]) ->
             Ast_helper.Exp.fun_ ~loc label None p e
-        | _ when label="" ->
+        | _ when label=Parr_simple ->
           Ast_helper.Exp.function_ ~loc 
             (List.map2 (fun p (eo,e) -> {pc_lhs=p;pc_guard=eo;pc_rhs=e}) 
               pats egbodies)
@@ -1124,7 +1140,7 @@ let build_ident : Location.t -> string loc -> code_repr =
    Use name.loc to identify the binder in the source code.
 *)
 let build_fun_simple : 
-  Location.t -> string -> string loc -> (code_repr -> code_repr) -> code_repr =
+  Location.t -> Parsetree.arrow_flag -> string loc -> (code_repr -> code_repr) -> code_repr =
   fun loc label old_name fbody -> 
   let (name, vars, ebody) = with_binding_region loc old_name fbody in
   let pat = Ast_helper.Pat.var ~loc:name.loc name in
@@ -1266,7 +1282,7 @@ let dyn_quote : Obj.t -> Longident.t loc -> code_repr =
    match Obj.is_int v with
     | true ->   (* Looks like an integer: coerce from it using Obj.magic *)
         Ast_helper.Exp.apply ~attrs:[csp_attr] ~loc:li.loc
-          obj_magic_exp [("",Ast_helper.Exp.constant (Const_int (Obj.obj v)))]
+          obj_magic_exp [(Papp_simple,Ast_helper.Exp.constant (Const_int (Obj.obj v)))]
     | false when Obj.tag v = Obj.double_tag ->
       Ast_helper.Exp.constant (Const_float (string_of_float (Obj.obj v)))
     | false when Obj.tag v = Obj.string_tag ->
@@ -1277,7 +1293,7 @@ let dyn_quote : Obj.t -> Longident.t loc -> code_repr =
             debug_print ~loc:li.loc 
              "The CSP value is a closure or too deep to serialize" in
         Ast_helper.Exp.apply ~attrs:[csp_attr] ~loc:li.loc
-          obj_magic_exp [("",Ast_helper.Exp.constant 
+          obj_magic_exp [(Papp_simple,Ast_helper.Exp.constant 
                                (Const_string (Obj.obj v,None)))]
 
        
@@ -1611,14 +1627,14 @@ let prepare_cases : Location.t ->
               pats egbodies)
 
 let build_fun : 
-  Location.t -> string -> 
+  Location.t -> Parsetree.arrow_flag -> 
   (Parsetree.pattern list * string loc list) -> 
   (code_repr array -> (code_repr option * code_repr) array) -> code_repr =
   fun loc label pon fgbodies -> 
   prepare_cases loc Nil pon fgbodies @@ function
     | [{pc_lhs=p; pc_guard=None; pc_rhs=e}] ->
         Ast_helper.Exp.fun_ ~loc label None p e
-    | cases when label="" -> 
+    | cases when label=Parr_simple -> 
         Ast_helper.Exp.function_ ~loc cases
     | _ -> assert false
 
@@ -1804,9 +1820,9 @@ and trx_case_list_body : int -> Typedtree.pattern ->
                   trx_bracket n c_rhs])
       cl) in
   { exp with
-    exp_desc = Texp_function ("",[texp_case binding_pat body],Total);
+    exp_desc = Texp_function (Tarr_simple,[texp_case binding_pat body],Total);
     exp_type = {exp.exp_type with desc =
-                   Tarrow ("",binding_pat.pat_type, body.exp_type, Cok)}
+                   Tarrow (Tarr_simple,binding_pat.pat_type, body.exp_type, Cok)}
   }
 
 
@@ -1848,10 +1864,10 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
          trx_bracket n e;
          { exp with
            exp_desc = 
-             Texp_function ("",[texp_case pat (trx_bracket n ebody)],Total);
+             Texp_function (Tarr_simple,[texp_case pat (trx_bracket n ebody)],Total);
            exp_type = 
             {exp.exp_type with desc =
-               Tarrow ("",pat.pat_type, wrap_ty_in_code n ebody.exp_type, Cok)}
+               Tarrow (Tarr_simple,pat.pat_type, wrap_ty_in_code n ebody.exp_type, Cok)}
          }
        ]
 
@@ -1937,7 +1953,7 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
       let pat = {pat with pat_type = wrap_ty_in_code n pat.pat_type} in
       texp_apply (texp_ident "Trx.build_fun_simple") 
         [texp_loc exp.exp_loc;
-         texp_string l;
+         texp_arrow_flag l;
          texp_string_loc name;
          (* Translate the future-stage function as present-stage function;
             with the same variables, but with a different type,
@@ -1946,10 +1962,10 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
          { exp with
            exp_desc = 
              Texp_function
-               ("",[texp_case pat (trx_bracket n ebody)],Total);
+               (Tarr_simple,[texp_case pat (trx_bracket n ebody)],Total);
            exp_type = 
             {exp.exp_type with desc =
-               Tarrow ("",pat.pat_type, wrap_ty_in_code n ebody.exp_type, Cok)}
+               Tarrow (Tarr_simple,pat.pat_type, wrap_ty_in_code n ebody.exp_type, Cok)}
          }
        ]
 
@@ -1959,7 +1975,7 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
       | (pl, [], _) ->                    (* non-binding pattern *)
           texp_apply (texp_ident "Trx.build_fun_nonbinding")
             [texp_loc exp.exp_loc; 
-             texp_string l;
+             texp_arrow_flag l;
              begin 
                let pl_exp = texp_ident "Trx.sample_pat_list" in
                {pl_exp with
@@ -1974,7 +1990,7 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
       | (pl, names, binding_pat) ->
           texp_apply (texp_ident "Trx.build_fun") 
             [texp_loc exp.exp_loc;
-             texp_string l;
+             texp_arrow_flag l;
              texp_pats_names pl names;
              trx_case_list_body n binding_pat exp cl
            ]
@@ -1983,13 +1999,13 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
   | Texp_apply (e, el) ->
      (* first, we remove from el the information added by the type-checker *)
      let lel = List.fold_right (function                 (* keep the order! *)
-                | (_,None,_)   -> fun acc -> acc
-                | (l,Some e,_) -> fun acc -> (l,e)::acc) el [] in
-     let lel = ("",e) :: lel in          (* Add the operator *)
+                | {arg_expression=None}   -> fun acc -> acc
+                | {arg_flag=l; arg_expression=Some e} -> fun acc -> (l,e)::acc) el [] in
+     let lel = (Tapp_simple,e) :: lel in          (* Add the operator *)
       texp_apply (texp_ident "Trx.build_apply")
         [texp_loc exp.exp_loc; 
          texp_array (List.map (fun (l,e) ->
-           texp_tuple [texp_string l;trx_bracket n e]) lel)]
+           texp_tuple [texp_apply_flag l;trx_bracket n e]) lel)]
 
   (* Pretty much like a function *)
   (* rcl: regular cases; ecl: exceptional cases *)
@@ -2097,10 +2113,10 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
                     pat_desc = Tpat_var (id,name)} in
          { exp with
            exp_desc = 
-             Texp_function ("",[texp_case pat (trx_bracket n ebody)],Total);
+             Texp_function (Tarr_simple,[texp_case pat (trx_bracket n ebody)],Total);
            exp_type = 
             {exp.exp_type with desc =
-               Tarrow ("",var_typ, wrap_ty_in_code n ebody.exp_type, Cok)}
+               Tarrow (Tarr_simple,var_typ, wrap_ty_in_code n ebody.exp_type, Cok)}
          }
        ]
 
@@ -2130,7 +2146,7 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
         *)
   | Texp_setinstvar _ -> not_supported exp.exp_loc "Objects (Texp_setinstvar)"
   | Texp_override  _  -> not_supported exp.exp_loc "Objects (Texp_override)"
-  | Texp_letmodule (id,s,me,e) -> not_supported exp.exp_loc "let module"
+  | Texp_letmodule _ -> not_supported exp.exp_loc "let module"
 
   | Texp_assert e ->
       texp_apply (texp_ident "Trx.build_assert")
@@ -2285,7 +2301,8 @@ and trx_ce_desc = function
                      trx_ce (el,ce) in
   Tcl_fun (l,p,el,ce,pa)
 | Tcl_apply (ce,el) ->
-  let repel (l,eo,o) = (l,replace_opt trx_exp eo,o) in
+  let repel {arg_flag=l;arg_expression=eo} =
+    {arg_flag=l; arg_expression=replace_opt trx_exp eo} in
   let (ce,el) = replace_pair trx_ce (replace_list repel) (ce,el) in
   Tcl_apply (ce,el)
 | Tcl_let (rf,vbl,el2,ce) ->
@@ -2327,7 +2344,8 @@ and trx_expression = function
 | Texp_function (l,cl,p) ->
   Texp_function (l,trx_caselist cl,p)
 | Texp_apply (e,el) ->
-  let repl (l,eo,op) = (l,replace_opt trx_exp eo,op) in
+  let repl {arg_flag=l; arg_expression=eo} =
+    {arg_flag=l; arg_expression=replace_opt trx_exp eo} in
   let (e,el) = replace_pair trx_exp (replace_list repl) (e,el)
   in Texp_apply (e,el)
 | Texp_match (e,cl1,cl2,p) ->
@@ -2372,9 +2390,9 @@ and trx_expression = function
 | Texp_setinstvar (p1,p2,l,e) -> Texp_setinstvar (p1,p2,l,trx_exp e)
 | Texp_override (p, el) ->
   Texp_override (p, replace_list (fun (p,l,e) -> (p,l,trx_exp e)) el)
-| Texp_letmodule (i,l,me,e) ->
-  let (me,e) = replace_pair trx_me trx_exp (me,e)
-  in Texp_letmodule (i,l,me,e)
+| Texp_letmodule (mb, e) ->
+  let (me,e) = replace_pair trx_me trx_exp (mb.mb_expr,e)
+  in Texp_letmodule ({mb with mb_expr = me}, e)
 | Texp_assert e -> Texp_assert (trx_exp e)
 | Texp_lazy e -> Texp_lazy (trx_exp e)
 | Texp_object (cs,sl) -> Texp_object (trx_cl_struct cs,sl)

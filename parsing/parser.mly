@@ -289,8 +289,8 @@ let let_operator op bindings cont =
             (fun {pvb_pat=p;pvb_expr=e} (ps,es) -> (p::ps,e::es)) l ([],[]) in
         ghpat (Ppat_tuple pats), ghexp (Pexp_tuple exprs)
     in
-      mkexp(Pexp_apply(op, [("", expr); 
-                            ("", ghexp(Pexp_fun("", None, pat, cont)))]))
+      mkexp(Pexp_apply(op, [(Papp_simple, expr); 
+                            (Papp_simple, ghexp(Pexp_fun(Parr_simple, None, pat, cont)))]))
 
 let wrap_exp_attrs body (ext, attrs) =
   (* todo: keep exact location for the entire attribute *)
