@@ -532,7 +532,7 @@ class printer  ()= object(self:'self)
               begin
                 (* This CSP is easy to print, so we print it *)
                 match x.pexp_desc with
-                | Pexp_apply (_,[("",{pexp_desc=Pexp_constant (Const_int _)})])
+                | Pexp_apply (_,[(Nolabel,{pexp_desc=Pexp_constant (Const_int _)})])
                     -> 
                       pp f "(* CSP %a *) %a"
                         self#longident_loc li
