@@ -77,7 +77,7 @@ let load_lambda ppf lam =
     fprintf ppf "%a%a@."
     Printinstr.instrlist init_code
     Printinstr.instrlist fun_code;
-  let (code, code_size, reloc) = Emitcode.to_memory init_code fun_code in
+  let (code, code_size, reloc, _) = Emitcode.to_memory init_code fun_code in
   let can_free = (fun_code = []) in
   let initial_symtable = Symtable.current_state() in
   Symtable.patch_object code reloc;
