@@ -101,6 +101,7 @@ val set_with_stack_mark : stackmark_region_fn -> unit
 
 val loc_none : Location.t
 val sample_lid  : Longident.t Location.loc  (* A template for lid expressions *)
+val sample_arg_label : Asttypes.arg_label
 val sample_name : string Location.loc
 val sample_pat_list : Parsetree.pattern list
 val sample_pats_names : Parsetree.pattern list * string Location.loc list
@@ -121,7 +122,7 @@ val build_escape   : Location.t -> code_repr -> code_repr
 val build_sequence : Location.t -> code_repr -> code_repr -> code_repr
 val build_while    : Location.t -> code_repr -> code_repr -> code_repr
 
-val build_apply : Location.t -> (Asttypes.label * code_repr) array -> code_repr
+val build_apply : Location.t -> (Asttypes.arg_label * code_repr) array -> code_repr
 
 val build_tuple : Location.t -> code_repr array -> code_repr
 val build_array : Location.t -> code_repr array -> code_repr
@@ -142,10 +143,10 @@ val build_open :
   Location.t -> Longident.t Location.loc -> Asttypes.override_flag -> 
   code_repr -> code_repr
 val build_fun_nonbinding : 
-  Location.t -> string -> Parsetree.pattern list -> 
+  Location.t -> Asttypes.arg_label -> Parsetree.pattern list -> 
   (code_repr option * code_repr) array -> code_repr
 val build_fun_simple : 
-  Location.t -> string -> string Location.loc -> 
+  Location.t -> Asttypes.arg_label -> string Location.loc -> 
   (code_repr -> code_repr) -> code_repr
 val build_for : 
   Location.t -> string Location.loc -> code_repr -> code_repr -> 
@@ -154,7 +155,7 @@ val build_let_simple_nonrec :
   Location.t -> string Location.loc -> code_repr -> 
     (code_repr -> code_repr) -> code_repr
 val build_fun : 
-  Location.t -> string -> 
+  Location.t -> Asttypes.arg_label -> 
   (Parsetree.pattern list * string Location.loc list) -> 
   (code_repr array -> (code_repr option * code_repr) array) -> code_repr
 val build_let : 
