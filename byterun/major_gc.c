@@ -26,6 +26,7 @@
 #include "caml/mlvalues.h"
 #include "caml/roots.h"
 #include "caml/weak.h"
+#include "caml/stacks.h"
 
 #if defined (NATIVE_CODE) && defined (NO_NAKED_POINTERS)
 #define NATIVE_CODE_AND_NO_NAKED_POINTERS
@@ -369,6 +370,8 @@ intnat caml_major_collection_slice (intnat howmuch)
 {
   double p, dp;
   intnat computed_work;
+
+  caml_save_stack_gc (0);
   /*
      Free memory at the start of the GC cycle (garbage + free list) (assumed):
                  FM = caml_stat_heap_wsz * caml_percent_free
@@ -454,7 +457,10 @@ intnat caml_major_collection_slice (intnat howmuch)
     caml_gc_message (0x02, "$", 0);
   }
 
+  caml_restore_stack_gc ();
+
   if (caml_gc_phase == Phase_idle) caml_compact_heap_maybe ();
+
 
   caml_stat_major_words += caml_allocated_words;
   caml_allocated_words = 0;
@@ -472,6 +478,7 @@ intnat caml_major_collection_slice (intnat howmuch)
 */
 void caml_finish_major_cycle (void)
 {
+  caml_save_stack_gc (0);
   if (caml_gc_phase == Phase_idle) start_cycle ();
   while (caml_gc_phase == Phase_mark) mark_slice (LONG_MAX);
   Assert (caml_gc_phase == Phase_sweep);
@@ -479,6 +486,7 @@ void caml_finish_major_cycle (void)
   Assert (caml_gc_phase == Phase_idle);
   caml_stat_major_words += caml_allocated_words;
   caml_allocated_words = 0;
+  caml_restore_stack_gc ();
 }
 
 /* Make sure the request is at least Heap_chunk_min and round it up
