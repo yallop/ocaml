@@ -282,21 +282,6 @@ let wrap_type_annotation newtypes core_type body =
   in
   (exp, ghtyp(Ptyp_poly(newtypes,varify_constructors newtypes core_type)))
 
-    (* NNN: the whole definition *)
-let let_operator op bindings cont =
-  let pat, expr =
-    match bindings with
-    | []   -> assert false
-    | [x]  -> (x.pvb_pat,x.pvb_expr)
-    | l    -> 
-        let pats, exprs = 
-          List.fold_right
-            (fun {pvb_pat=p;pvb_expr=e} (ps,es) -> (p::ps,e::es)) l ([],[]) in
-        ghpat (Ppat_tuple pats), ghexp (Pexp_tuple exprs)
-    in
-      mkexp(Pexp_apply(op, [("", expr); 
-                            ("", ghexp(Pexp_fun("", None, pat, cont)))]))
-
 let wrap_exp_attrs body (ext, attrs) =
   (* todo: keep exact location for the entire attribute *)
   let body = {body with pexp_attributes = attrs @ body.pexp_attributes} in
@@ -410,6 +395,20 @@ let class_of_let_bindings lbs body =
       raise Syntaxerr.(Error(Not_expecting(lbs.lbs_loc, "attributes")));
     mkclass(Pcl_let (lbs.lbs_rec, List.rev bindings, body))
 
+    (* NNN: the whole definition *)
+let let_operator op bindings cont =
+  let pat, expr =
+    match bindings.lbs_bindings with
+    | []   -> assert false
+    | [x]  -> (x.lb_pattern, x.lb_expression)
+    | l    -> 
+        let pats, exprs = 
+          List.fold_right
+            (fun {lb_pattern=p;lb_expression=e} (ps,es) -> (p::ps,e::es)) l ([],[]) in
+        ghpat (Ppat_tuple pats), ghexp (Pexp_tuple exprs)
+    in
+      mkexp(Pexp_apply(op, [(Nolabel, expr); 
+                            (Nolabel, ghexp(Pexp_fun(Nolabel, None, pat, cont)))]))
 %}
 
 /* Tokens */
