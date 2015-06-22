@@ -18,8 +18,11 @@ include stdlib/StdlibModules
 CAMLC=boot/ocamlrun boot/ocamlc -nostdlib -I boot
 CAMLOPT=boot/ocamlrun ./ocamlopt -nostdlib -I stdlib -I otherlibs/dynlink
 COMPFLAGS=-strict-sequence -w +33..39+48 -warn-error A -bin-annot \
-          -safe-string $(INCLUDES)
-LINKFLAGS=
+          -safe-string $(INCLUDES) -g
+LINKFLAGS=-g
+# For debugging
+# COMPFLAGS=-warn-error A -g $(INCLUDES) # NNN
+# LINKFLAGS=-g #NNN
 
 CAMLYACC=boot/ocamlyacc
 YACCFLAGS=-v
@@ -49,6 +52,7 @@ PARSING=parsing/location.cmo parsing/longident.cmo \
   parsing/pprintast.cmo \
   parsing/ast_mapper.cmo
 
+# NNN (trx)
 TYPING=typing/ident.cmo typing/path.cmo \
   typing/primitive.cmo typing/types.cmo \
   typing/btype.cmo typing/oprint.cmo \
@@ -61,6 +65,7 @@ TYPING=typing/ident.cmo typing/path.cmo \
   typing/tast_mapper.cmo \
   typing/cmt_format.cmo \
   typing/includemod.cmo typing/typetexp.cmo typing/parmatch.cmo \
+  typing/trx.cmo \
   typing/stypes.cmo typing/typecore.cmo \
   typing/typedecl.cmo typing/typeclass.cmo \
   typing/typemod.cmo typing/untypeast.cmo
@@ -147,6 +152,8 @@ all:
 	$(MAKE) ocaml
 	$(MAKE) otherlibraries $(OCAMLBUILDBYTE) $(WITH_DEBUGGER) \
 	  $(WITH_OCAMLDOC)
+
+# NNN make all && (cd metalib && make clean all) && (make install; cd metalib && make install)
 
 # Compile everything the first time
 world:
@@ -348,6 +355,13 @@ install:
 	   $(INSTALL_COMPLIBDIR)
 	cp expunge $(INSTALL_LIBDIR)/expunge$(EXE)
 	cp toplevel/topdirs.cmi $(INSTALL_LIBDIR)
+# NNN typing/trx.ml needs its own interface (since it looks up identifiers
+# in itself)
+# Although typing/trx.cmi is already copied, see above, it is copied
+# into $((COMPLIBDIR). We need trx.cmi in the standard .cmi search path.
+	cp typing/trx.cmi $(INSTALL_LIBDIR)
+# BTW, trx.cmo is part of ocamlcommon.cma
+# NNN end
 	cd tools; $(MAKE) install
 	-cd man; $(MAKE) install
 	for i in $(OTHERLIBRARIES); do \
@@ -768,7 +782,7 @@ html_doc: ocamldoc
 partialclean::
 	cd ocamldoc && $(MAKE) clean
 
-alldepend::
+alldepen1d::
 	cd ocamldoc && $(MAKE) depend
 
 # The extra libraries
