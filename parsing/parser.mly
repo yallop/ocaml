@@ -379,20 +379,6 @@ let class_of_let_bindings lbs body =
       raise Syntaxerr.(Error(Not_expecting(lbs.lbs_loc, "attributes")));
     mkclass(Pcl_let (lbs.lbs_rec, List.rev bindings, body))
 
-    (* NNN: the whole definition *)
-let let_operator op bindings cont =
-  let pat, expr =
-    match bindings.lbs_bindings with
-    | []   -> assert false
-    | [x]  -> (x.lb_pattern, x.lb_expression)
-    | l    ->
-        let pats, exprs =
-          List.fold_right
-            (fun {lb_pattern=p;lb_expression=e} (ps,es) -> (p::ps,e::es)) l ([],[]) in
-        ghpat (Ppat_tuple pats), ghexp (Pexp_tuple exprs)
-    in
-      mkexp(Pexp_apply(op, [(Nolabel, expr);
-                            (Nolabel, ghexp(Pexp_fun(Nolabel, None, pat, cont)))]))
 %}
 
 /* Tokens */
@@ -466,7 +452,6 @@ let let_operator op bindings cont =
 %token LESS
 %token LESSMINUS
 %token LET
-%token <string> LETOP /* NNN */
 %token <string> LIDENT
 %token LPAREN
 %token LBRACKETAT
@@ -552,7 +537,6 @@ The precedences must be listed from low to high.
 %nonassoc below_SEMI
 %nonassoc SEMI                          /* below EQUAL ({lbl=...; lbl=...}) */
 %nonassoc LET                           /* above SEMI ( ...; let ... in ...) */
-%nonassoc LETOP           /* NNN */
 %nonassoc below_WITH
 %nonassoc FUNCTION WITH                 /* below BAR  (match ... with ...) */
 %nonassoc AND             /* above WITH (module rec A: SIG with ... and ...) */
@@ -1217,8 +1201,6 @@ expr:
       { mkexp(Pexp_apply($1, List.rev $2)) }
   | let_bindings IN seq_expr
       { expr_of_let_bindings $1 $3 }
-  | let_operator ext_attributes let_bindings IN seq_expr     /* NNN */
-      { wrap_exp_attrs (let_operator $1 $3 $5) $2 }          /* NNN */
   | LET MODULE ext_attributes UIDENT module_binding_body IN seq_expr
       { mkexp_attrs (Pexp_letmodule(mkrhs $4 4, $5, $7)) $3 }
   | LET OPEN override_flag ext_attributes mod_longident IN seq_expr
@@ -2181,7 +2163,6 @@ operator:
   | INFIXOP3                                    { $1 }
   | INFIXOP4                                    { $1 }
   | SHARPOP                                     { $1 }
-  | LETOP                                       { $1 } /* NNN */
   | BANG                                        { "!" }
   | PLUS                                        { "+" }
   | PLUSDOT                                     { "+." }
@@ -2216,16 +2197,6 @@ index_operator_core:
 opt_assign_arrow:
 	                                        { "" }
   | LESSMINUS                                   { "<-" }
-;
-
-    /* NNN: the whole definition */
-let_operator:
-    LETOP                                   { mkexp (Pexp_ident(
-                                                     mkloc (Lident $1)
-                                                           (symbol_rloc ()))) }
-  | mod_longident DOT LETOP                 { mkexp (Pexp_ident(
-                                                     mkloc (Ldot($1,$3))
-                                                           (symbol_rloc ()))) }
 ;
 
 constr_ident:
