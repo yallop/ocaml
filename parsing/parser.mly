@@ -385,13 +385,13 @@ let let_operator op bindings cont =
     match bindings.lbs_bindings with
     | []   -> assert false
     | [x]  -> (x.lb_pattern, x.lb_expression)
-    | l    -> 
-        let pats, exprs = 
+    | l    ->
+        let pats, exprs =
           List.fold_right
             (fun {lb_pattern=p;lb_expression=e} (ps,es) -> (p::ps,e::es)) l ([],[]) in
         ghpat (Ppat_tuple pats), ghexp (Pexp_tuple exprs)
     in
-      mkexp(Pexp_apply(op, [(Nolabel, expr); 
+      mkexp(Pexp_apply(op, [(Nolabel, expr);
                             (Nolabel, ghexp(Pexp_fun(Nolabel, None, pat, cont)))]))
 %}
 
@@ -1336,10 +1336,10 @@ simple_expr:
   | LPAREN seq_expr error
       { unclosed "(" 1 ")" 3 }
   | DOTLESS expr GREATERDOT                 /* NNN */
-      { wrap_exp_attrs $2 
+      { wrap_exp_attrs $2
            (None,[ghloc "metaocaml.bracket",PStr []]) }            /* NNN */
   | DOTTILDE simple_expr %prec prec_escape  /* NNN */
-      { wrap_exp_attrs $2 
+      { wrap_exp_attrs $2
            (None,[ghloc "metaocaml.escape",PStr []]) }             /* NNN */
   | BEGIN ext_attributes seq_expr END
       { wrap_exp_attrs (reloc_exp $3) $2 (* check location *) }
