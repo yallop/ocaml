@@ -499,8 +499,6 @@ rule token = parse
             { INFIXOP3(Lexing.lexeme lexbuf) }
   | '#' (symbolchar | '#') +
             { SHARPOP(Lexing.lexeme lexbuf) }
-  | "let" symbolchar*                            (* NNN *)
-            { LETOP(Lexing.lexeme lexbuf) }      (* NNN *)
   | eof { EOF }
   | _
       { raise (Error(Illegal_character (Lexing.lexeme_char lexbuf 0),
