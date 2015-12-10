@@ -274,8 +274,8 @@ let rec is_external = function
 let rec path_to_lid : Path.t -> Longident.t = function
   | Path.Pident i       -> Longident.Lident (Ident.name i)
   | Path.Pdot (p,s,_)   -> Longident.Ldot (path_to_lid p, s)
-  | Path.Papply (p1,p2) ->
-      Longident.Lapply(path_to_lid p1, path_to_lid p2)
+  | Path.Papply (p1,p2,implicit_flag) ->
+      Longident.Lapply(path_to_lid p1, path_to_lid p2,implicit_flag)
 
 (* Convert the path to lid but use the given str as the last component.
    This in effect qualifies 'str' with the given module path
@@ -2274,12 +2274,17 @@ and trx_me me =
 and trx_me_desc = function
 | Tmod_ident _ -> raise Not_modified
 | Tmod_structure str -> Tmod_structure (trx_struct str)
-| Tmod_functor (i,l,t,me) -> Tmod_functor (i,l,t, trx_me me)
-| Tmod_apply (me1,me2,mc) ->
-  let (me1,me2) = replace_pair trx_me trx_me (me1,me2) in
-  Tmod_apply (me1, me2, mc)
+| Tmod_functor (t,me) -> Tmod_functor (t, trx_me me)
+| Tmod_apply (me,ma) ->
+  let (me,ma) = replace_pair trx_me trx_ma (me,ma) in
+  Tmod_apply (me, ma)
 | Tmod_constraint (me,mt,mtc,mc) -> Tmod_constraint (trx_me me, mt, mtc, mc)
 | Tmod_unpack (e,mt) -> Tmod_unpack (trx_exp e,mt)
+
+and trx_ma = function
+    Tmarg_generative -> Tmarg_generative
+  | Tmarg_applicative (me, mc) -> Tmarg_applicative (trx_me me, mc)
+  | Tmarg_implicit  (me, mc) -> Tmarg_implicit (trx_me me, mc)
 
 and trx_cdcl class_decl =
   {class_decl with ci_expr = trx_ce class_decl.ci_expr}
