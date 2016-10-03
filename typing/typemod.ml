@@ -1302,19 +1302,31 @@ and type_structure ?(toplevel = false) funct_body anchor env sstr scope =
                     }, Trec_not)],
         newenv
     | Pstr_recmodule sbind ->
+        let rec modty {pmod_desc=p; pmod_loc=loc} = match p with
+          | Pmod_constraint(_, typ) -> Some typ
+          | Pmod_functor (param, Some sarg, body) ->
+              begin match modty body with
+                Some sres -> Some {
+                  pmty_loc = loc;
+                  pmty_attributes = [];
+                  pmty_desc = Pmty_functor(param, Some sarg, sres);
+                }
+              | None -> None
+              end
+          | _ -> None
+        in
         let sbind =
           List.map
-            (function
-              | {pmb_name = name;
-                 pmb_expr = {pmod_desc=Pmod_constraint(expr, typ)};
-                 pmb_attributes = attrs;
-                 pmb_loc = loc;
-                } ->
+            (fun {pmb_name = name;
+                  pmb_expr = expr;
+                  pmb_attributes = attrs;
+                  pmb_loc = loc; } ->
+              match modty expr with
+              | Some typ ->
                   name, typ, expr, attrs, loc
-              | mb ->
-                  raise (Error (mb.pmb_expr.pmod_loc, env,
-                                Recursive_module_require_explicit_type))
-            )
+              | None ->
+                  raise (Error (expr.pmod_loc, env,
+                                Recursive_module_require_explicit_type)))
             sbind
         in
         List.iter
