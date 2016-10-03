@@ -1007,9 +1007,9 @@ rec_module_declarations:
       { let (l, ext) = $1 in ($2 :: l, ext) }
 ;
 rec_module_declaration:
-    MODULE ext_attributes REC UIDENT COLON module_type post_item_attributes
+    MODULE ext_attributes REC UIDENT module_declaration_body post_item_attributes
       { let (ext, attrs) = $2 in
-        Md.mk (mkrhs $4 4) $6 ~attrs:(attrs@$7)
+        Md.mk (mkrhs $4 4) $5 ~attrs:(attrs@$6)
             ~loc:(symbol_rloc()) ~docs:(symbol_docs ())
       , ext}
 ;
