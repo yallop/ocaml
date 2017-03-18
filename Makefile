@@ -21,8 +21,11 @@ CAMLC=$(CAMLRUN) boot/ocamlc -nostdlib -I boot
 #CAMLOPT=$(CAMLRUN) ./ocamlopt -g -nostdlib -runtime-variant d -I asmrun -I stdlib -I otherlibs/dynlink
 CAMLOPT=$(CAMLRUN) ./ocamlopt -nostdlib -I stdlib -I otherlibs/dynlink
 COMPFLAGS=-strict-sequence -w +33..39+48+50 -warn-error A -bin-annot \
-          -safe-string $(INCLUDES)
-LINKFLAGS=
+          -safe-string $(INCLUDES) -g
+LINKFLAGS=-g
+# For debugging
+# COMPFLAGS=-warn-error A -g $(INCLUDES) # NNN
+# LINKFLAGS=-g #NNN
 
 YACCFLAGS=-v
 CAMLLEX=$(CAMLRUN) boot/ocamllex
@@ -47,6 +50,7 @@ PARSING=parsing/location.cmo parsing/longident.cmo \
   parsing/pprintast.cmo \
   parsing/ast_mapper.cmo
 
+# NNN (trx)
 TYPING=typing/ident.cmo typing/path.cmo \
   typing/primitive.cmo typing/types.cmo \
   typing/btype.cmo typing/oprint.cmo \
@@ -59,6 +63,7 @@ TYPING=typing/ident.cmo typing/path.cmo \
   typing/tast_mapper.cmo \
   typing/cmt_format.cmo \
   typing/includemod.cmo typing/typetexp.cmo typing/parmatch.cmo \
+  typing/trx.cmo \
   typing/stypes.cmo typing/typecore.cmo \
   typing/typedecl.cmo typing/typeclass.cmo \
   typing/typemod.cmo typing/untypeast.cmo
@@ -147,6 +152,8 @@ all:
 	$(MAKE) ocaml
 	$(MAKE) otherlibraries $(WITH_DEBUGGER) \
 	  $(WITH_OCAMLDOC)
+
+# NNN make all && (cd metalib && make clean all) && (make install; cd metalib && make install)
 
 # Compile everything the first time
 world:
@@ -345,6 +352,13 @@ install:
 	   $(INSTALL_COMPLIBDIR)
 	cp expunge $(INSTALL_LIBDIR)/expunge$(EXE)
 	cp toplevel/topdirs.cmi $(INSTALL_LIBDIR)
+# NNN typing/trx.ml needs its own interface (since it looks up identifiers
+# in itself)
+# Although typing/trx.cmi is already copied, see above, it is copied
+# into $((COMPLIBDIR). We need trx.cmi in the standard .cmi search path.
+	cp typing/trx.cmi $(INSTALL_LIBDIR)
+# BTW, trx.cmo is part of ocamlcommon.cma
+# NNN end
 	cd tools; $(MAKE) install
 	-cd man; $(MAKE) install
 	for i in $(OTHERLIBRARIES); do \
