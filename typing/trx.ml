@@ -620,7 +620,7 @@ let texp_pats_names : Parsetree.pattern list -> string loc list ->
 (* Utility function to build the case list *)
 let texp_case : ?guard:expression -> pattern -> expression -> case =
   fun ?guard pat exp ->
-    {c_lhs=pat; c_guard=guard; c_rhs=exp}
+    {c_lhs=pat; c_guard=guard; c_rhs=exp; c_cont=None}
 
 (* ------------------------------------------------------------------------ *)
 (* Stack marks, a simple form of dynamic binding *)
@@ -1926,6 +1926,7 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
            pat_type=ebody.exp_type;
            pat_env=ebody.exp_env};
          c_guard=None; 
+         c_cont=None;
          c_rhs=ebody} ::
         List.map (fun {vb_pat;vb_expr} -> texp_case vb_pat vb_expr) vbl in
       let (pl,names,binding_pat) = 
@@ -2001,7 +2002,7 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
 
   (* Pretty much like a function *)
   (* rcl: regular cases; ecl: exceptional cases *)
-  | Texp_match (e,rcl,ecl,_) ->
+  | Texp_match (e,rcl,ecl,_,_) ->
       let cl = rcl @ ecl in     (* handle all cases uniformly *)
       let (pl,names,binding_pat) = 
         trx_cl cl (wrap_ty_in_code n (Btype.newgenvar ())) in
@@ -2013,7 +2014,7 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
          trx_case_list_body n binding_pat exp cl
        ]
 
-  | Texp_try (e,cl) ->                 (* same as Texp_match *)
+  | Texp_try (e,cl,_) ->                 (* same as Texp_match *)
       let (pl,names,binding_pat) = 
         trx_cl cl (wrap_ty_in_code n (Btype.newgenvar ())) in
       texp_apply (texp_ident "Trx.build_try") 
@@ -2246,6 +2247,7 @@ and trx_struct_item = function
 | Tstr_type _
 | Tstr_typext _
 | Tstr_exception _   -> raise Not_modified
+| Tstr_effect _   -> raise Not_modified
 | Tstr_module mb     -> Tstr_module (trx_mb mb)
 | Tstr_recmodule mbl -> Tstr_recmodule (replace_list trx_mb mbl)
 | Tstr_modtype _
@@ -2338,13 +2340,14 @@ and trx_expression = function
   let repl (l,eo,op) = (l,replace_opt trx_exp eo,op) in
   let (e,el) = replace_pair trx_exp (replace_list repl) (e,el)
   in Texp_apply (e,el)
-| Texp_match (e,cl1,cl2,p) ->
-  let (e,(cl1,cl2)) = replace_pair 
-     trx_exp (replace_pair trx_caselist trx_caselist) (e,(cl1,cl2))
-  in Texp_match (e,cl1,cl2,p)
-| Texp_try (e,cl) ->
-  let (e,cl) = replace_pair trx_exp trx_caselist (e,cl)
-  in Texp_try (e,cl)
+| Texp_match (e,cl1,cl2,cl3,p) ->
+  let (e,(cl1,(cl2,cl3))) = replace_pair 
+     trx_exp (replace_pair trx_caselist (replace_pair trx_caselist trx_caselist)) (e,(cl1,(cl2,cl3)))
+  in Texp_match (e,cl1,cl2,cl3,p)
+| Texp_try (e,cl,cl2) ->
+   let (e,(cl,cl2)) = replace_pair trx_exp
+     (replace_pair trx_caselist trx_caselist) (e,(cl,cl2))
+  in Texp_try (e,cl,cl2)
 | Texp_tuple l -> Texp_tuple (replace_list trx_exp l)
 | Texp_construct (l,cd,el) ->
   Texp_construct (l,cd,replace_list trx_exp el)

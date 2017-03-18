@@ -89,14 +89,14 @@ let load_lambda ppf lam =
     let retval = (Meta.reify_bytecode code code_size) () in
     Toploop.may_trace := false;
     if can_free then begin
-      Meta.static_release_bytecode code code_size;
+      (* Meta.static_release_bytecode code code_size; *)
       Meta.static_free code;
     end;
     retval
   with x ->
     Toploop.may_trace := false;
     if can_free then begin
-      Meta.static_release_bytecode code code_size;
+      (* Meta.static_release_bytecode code code_size; *)
       Meta.static_free code;
     end;
     (* let initial_bindings = !toplevel_value_bindings in *)
