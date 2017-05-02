@@ -863,6 +863,9 @@ module_type:
   | module_type MINUSGREATER module_type
       %prec below_WITH
       { mkmty(Pmty_functor(mknoloc "_", Some $1, $3)) }
+  | LPAREN RPAREN MINUSGREATER module_type
+      %prec below_WITH
+      { mkmty(Pmty_functor(mknoloc "*", None, $4)) }
   | module_type WITH with_constraints
       { mkmty(Pmty_with($1, List.rev $3)) }
   | MODULE TYPE OF attributes module_expr %prec below_LBRACKETAT
