@@ -218,8 +218,8 @@ let expr sub x =
         Texp_constraint (sub.typ sub cty)
     | Texp_coerce (cty1, cty2) ->
         Texp_coerce (opt (sub.typ sub) cty1, sub.typ sub cty2)
-    | Texp_open (ovf, loc, env) ->
-        Texp_open (ovf, loc, sub.env sub env)
+    | Texp_open (ovf, me, env) ->
+        Texp_open (ovf, sub.module_expr sub me, sub.env sub env)
     | Texp_newtype _ as d -> d
     | Texp_poly cto -> Texp_poly (opt (sub.typ sub) cto)
   in

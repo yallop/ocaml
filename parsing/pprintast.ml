@@ -667,7 +667,7 @@ and expression ctxt f x =
         pp f "@[<hov2>(!poly!@ %a@ : %a)@]"
           (simple_expr ctxt) e (core_type ctxt) ct
     | Pexp_open (ovf, lid, e) ->
-        pp f "@[<2>let open%s %a in@;%a@]" (override ovf) longident_loc lid
+        pp f "@[<2>let open%s %a in@;%a@]" (override ovf) (module_expr ctxt) lid
           (expression ctxt) e
     | Pexp_variant (l,Some eo) ->
         pp f "@[<2>`%s@;%a@]" l (simple_expr ctxt) eo

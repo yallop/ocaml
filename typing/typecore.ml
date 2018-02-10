@@ -3723,13 +3723,11 @@ and type_expect_
         exp_type = newty (Tpackage (p, nl, tl'));
         exp_attributes = sexp.pexp_attributes;
         exp_env = env }
-  | Pexp_open (ovf, lid, e) ->
-      let me = {pmod_desc=Pmod_ident lid; pmod_loc=lid.loc;
-                pmod_attributes=[]} in
-      let (_tme, newenv) = !type_open ovf env sexp.pexp_loc me in
+  | Pexp_open (ovf, me, e) ->
+      let (tme, newenv) = !type_open ovf env sexp.pexp_loc me in
       let exp = type_expect newenv e ty_expected_explained in
       { exp with
-        exp_extra = (Texp_open (ovf, lid, newenv), loc,
+        exp_extra = (Texp_open (ovf, tme, newenv), loc,
                      sexp.pexp_attributes) ::
                       exp.exp_extra;
       }

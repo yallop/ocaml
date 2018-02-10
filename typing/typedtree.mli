@@ -123,7 +123,7 @@ and exp_extra =
         (** E :> T           [Texp_coerce (None, T)]
             E : T0 :> T      [Texp_coerce (Some T0, T)]
          *)
-  | Texp_open of override_flag * Longident.t loc * Env.t
+  | Texp_open of override_flag * module_expr * Env.t
         (** let open[!] M in    [Texp_open (!, P, M, env)]
                                 where [env] is the environment after opening [P]
          *)

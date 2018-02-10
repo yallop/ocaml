@@ -394,8 +394,8 @@ module E = struct
     | Pexp_newtype (s, e) ->
         newtype ~loc ~attrs (map_loc sub s) (sub.expr sub e)
     | Pexp_pack me -> pack ~loc ~attrs (sub.module_expr sub me)
-    | Pexp_open (ovf, lid, e) ->
-        open_ ~loc ~attrs ovf (map_loc sub lid) (sub.expr sub e)
+    | Pexp_open (ovf, m, e) ->
+        open_ ~loc ~attrs ovf (sub.module_expr sub m) (sub.expr sub e)
     | Pexp_extension x -> extension ~loc ~attrs (sub.extension sub x)
     | Pexp_unreachable -> unreachable ~loc ~attrs ()
 end

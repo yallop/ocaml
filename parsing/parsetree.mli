@@ -346,7 +346,7 @@ and expression_desc =
 
            (module ME : S) is represented as
            Pexp_constraint(Pexp_pack, Ptyp_package S) *)
-  | Pexp_open of override_flag * Longident.t loc * expression
+  | Pexp_open of override_flag * module_expr * expression
         (* M.(E)
            let open M in E
            let! open M in E *)

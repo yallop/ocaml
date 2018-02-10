@@ -329,8 +329,8 @@ let exp_extra sub (extra, loc, attrs) sexp =
                      sub.typ sub cty2)
     | Texp_constraint cty ->
         Pexp_constraint (sexp, sub.typ sub cty)
-    | Texp_open (ovf, lid, _) ->
-        Pexp_open (ovf, map_loc sub lid, sexp)
+    | Texp_open (ovf, me, _) ->
+        Pexp_open (ovf, sub.module_expr sub me, sexp)
     | Texp_poly cto -> Pexp_poly (sexp, map_opt (sub.typ sub) cto)
     | Texp_newtype s -> Pexp_newtype (mkloc s loc, sexp)
   in

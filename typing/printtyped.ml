@@ -279,8 +279,8 @@ and expression_extra i ppf x attrs =
       attributes i ppf attrs;
       option i core_type ppf cto1;
       core_type i ppf cto2;
-  | Texp_open (ovf, lid, _) ->
-      line i ppf "Texp_open %a \"%a\"\n" fmt_override_flag ovf fmt_longident lid;
+  | Texp_open (ovf, me, _) ->
+      line i ppf "Texp_open %a \"%a\"\n" fmt_override_flag ovf (module_expr i) me;
       attributes i ppf attrs;
   | Texp_poly cto ->
       line i ppf "Texp_poly\n";
