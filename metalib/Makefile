@@ -22,10 +22,12 @@ OPTCOMPFLAGS=-strict-sequence -w +33..39-58 -warn-error A -nostdlib
 CAMLDEP=$(CAMLROOT)/boot/ocamlrun $(CAMLROOT)/tools/ocamldep
 
 METALIB=metalib.cma
+METALIBNATIVE=metalib.cmxa
 METALIBOBJS=print_code.cmo runcode.cmo
+METALIBOBJSNATIVE=print_code.cmx runnative.cmx
 METAOBJS=$(METALIB) bertop.cmo berstart.cmo
 
-all: $(METAOBJS) metaocaml metaocamlc opt
+all: $(METAOBJS) $(METALIBNATIVE) metaocaml metaocamlc opt
 
 .SUFFIXES: .mli .ml .cmi .cmo .cmx
 
@@ -41,6 +43,8 @@ all: $(METAOBJS) metaocaml metaocamlc opt
 $(METALIB): $(METALIBOBJS)
 	$(CAMLC) $(COMPFLAGS) -o $@ -a $(METALIBOBJS)
 
+$(METALIBNATIVE): $(METALIBOBJSNATIVE)
+	$(CAMLOPT) $(COMPFLAGS) -o $@ -a $(METALIBOBJSNATIVE)
 
 install: metaocaml metaocamlmktop metaocamlc
 	cp runcode.cmi print_code.cmi metalib.cma bertop.cmo berstart.cmo \
@@ -50,7 +54,7 @@ install: metaocaml metaocamlmktop metaocamlc
 	cp metaocamlc $(BINDIR)/metaocamlc$(EXE)
 
 install.opt: opt
-	cp runnative.cmi runnative.cmx runnative.o print_code.cmx print_code.o \
+	cp runnative.cmi runnative.cmx runnative.o print_code.cmx print_code.o metalib.cmxa metalib.a \
 	  $(LIBDIR)
 	cp metaocamlopt $(BINDIR)/metaocamlopt$(EXE)
 
@@ -83,7 +87,6 @@ clean::
 	rm -f metaocamlc
 
 opt: metaocamlopt print_code.cmx runnative.cmx
-
 metaocamlopt: metaocamlopt.c 
 	$(CC) -Wall -DBINDIR=\"$(BINDIR)\" -o metaocamlopt metaocamlopt.c
 
