@@ -807,7 +807,7 @@ let texp_pats_names : Parsetree.pattern list -> string loc list ->
 (* Utility function to build the case list *)
 let texp_case : ?guard:expression -> pattern -> expression -> case =
   fun ?guard pat exp ->
-    {c_lhs=pat; c_guard=guard; c_rhs=exp}
+    {c_lhs=pat; c_cont=None; c_guard=guard; c_rhs=exp}
 
 (* ------------------------------------------------------------------------ *)
 (* Stack marks, a simple form of dynamic binding *)
@@ -2288,6 +2288,7 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
            pat_type=ebody.exp_type;
            pat_env=ebody.exp_env};
          c_guard=None; 
+         c_cont=None;
          c_rhs=ebody} ::
         List.map (fun {vb_pat;vb_expr} -> texp_case vb_pat vb_expr) vbl in
       let (pl,names,binding_pat) = 
@@ -2364,7 +2365,7 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
 
   (* Pretty much like a function *)
   (* rcl: regular cases; ecl: exceptional cases *)
-  | Texp_match (e,rcl,ecl,_) ->
+  | Texp_match (e,rcl,ecl,[],_) ->
       let cl = rcl @ ecl in     (* handle all cases uniformly *)
       let (pl,names,binding_pat) = 
         trx_cl cl (wrap_ty_in_code n (Btype.newgenvar ())) in
@@ -2375,8 +2376,8 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
          texp_int @@ List.length rcl;
          trx_case_list_body n binding_pat exp cl
        ]
-
-  | Texp_try (e,cl) ->                 (* same as Texp_match *)
+  | Texp_match (_,_,_,_::_,_) -> not_supported exp.exp_loc "quoted effect cases"
+  | Texp_try (e,cl,[]) ->                 (* same as Texp_match *)
       let (pl,names,binding_pat) = 
         trx_cl cl (wrap_ty_in_code n (Btype.newgenvar ())) in
       texp_apply (texp_ident "Trx.build_try") 
@@ -2385,7 +2386,7 @@ and trx_bracket_ : int -> expression -> expression = fun n exp ->
          trx_bracket n e;
          trx_case_list_body n binding_pat exp cl
        ]
-
+  | Texp_try (_,_,_::_) -> not_supported exp.exp_loc "quoted effect cases"
   | Texp_tuple el ->
       texp_apply (texp_ident "Trx.build_tuple")
         [texp_loc exp.exp_loc; 
