@@ -914,7 +914,6 @@ module type Optcomp_options = sig
   val _S : unit -> unit
   val _stack_slop : int -> unit
   val _shared : unit -> unit
-  val _opaque :  unit -> unit
 end;;
 
 module type Opttop_options = sig
