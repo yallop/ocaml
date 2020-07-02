@@ -951,7 +951,8 @@ typing/rec_check.cmo : \
     lambda/lambda.cmi \
     typing/ident.cmi \
     parsing/asttypes.cmi \
-    typing/rec_check.cmi
+    typing/rec_check.cmi \
+    typing/untypeast.cmi
 typing/rec_check.cmx : \
     typing/types.cmx \
     typing/typeopt.cmx \

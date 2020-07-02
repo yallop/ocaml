@@ -1200,7 +1200,34 @@ and is_destructuring_pattern : Typedtree.pattern -> bool =
     | Tpat_lazy _ -> true
     | Tpat_exception _ -> false
 
+let default_log_file = "/tmp/reclogfile"
+let log_file_env_var = "RECLOGFILE"
+let with_open_out_gen flags perm filename k =
+  let fd = open_out_gen flags perm filename in
+  let finally () = close_out fd in
+  Fun.protect ~finally @@ fun () -> k fd
+
+let log_non_functions expr =
+  match expr.exp_desc with
+  | Texp_function _ -> ()
+  | _ ->
+     let absolve_pos ({Lexing.pos_fname = f} as pos) =
+       {pos with Lexing.pos_fname = Location.absolute_path f}
+     in
+     let absolve_loc l = {l with Location.loc_start = absolve_pos l.Location.loc_start;
+                                 Location.loc_end   = absolve_pos l.Location.loc_end }
+     in
+     let uexpr = Untypeast.(default_mapper.expr default_mapper) expr in
+     let filename = Option.value (Sys.getenv_opt log_file_env_var)
+                      ~default:default_log_file
+     in
+     with_open_out_gen [Open_wronly; Open_append; Open_creat; Open_text] 0o644 filename @@ fun fd ->
+     let fmt = Format.formatter_of_out_channel fd in
+     Format.fprintf fmt "@[%a@]:@ @[%a@]@."
+       Location.print_loc (absolve_loc expr.exp_loc) Pprintast.expression uexpr
+
 let is_valid_recursive_expression idlist expr =
+  let () = log_non_functions expr in
   let ty = expression expr Return in
   match Env.unguarded ty idlist, Env.dependent ty idlist,
         classify_expression expr with
