@@ -344,6 +344,15 @@ end
 
 type mode = Mode.t = Ignore | Delay | Guard | Return | Dereference
 
+let pp_mode ppf m =
+  Format.fprintf ppf "%s"
+  (match m with
+   | Ignore -> "Ignore"
+   | Delay -> "Delay"
+   | Guard -> "Guard"
+   | Return -> "Return"
+   | Dereference -> "Dereference")
+
 module Env :
 sig
   type t
@@ -385,6 +394,8 @@ sig
   (** Remove all the identifiers of a list from an environment. *)
 
   val equal : t -> t -> bool
+
+  val pp : Format.formatter -> t -> unit
 end = struct
   module M = Map.Make(Ident)
 
@@ -392,6 +403,20 @@ end = struct
   type t = Mode.t M.t
 
   let equal = M.equal Mode.equal
+
+  let pp ppf env =
+    let n = M.cardinal env in
+    let i = ref 0 in
+    Format.fprintf ppf "{@[";
+    M.iter
+      (fun k v ->
+        incr i;
+        if !i = n then
+          Format.fprintf ppf "@[%a:%a@]" Ident.print k pp_mode v
+        else
+          Format.fprintf ppf "@[%a:%a@],@;" Ident.print k pp_mode v)
+      env;
+    Format.fprintf ppf "@]}"
 
   let find (id: Ident.t) (tbl: t) =
     try M.find id tbl with Not_found -> Ignore
@@ -1204,6 +1229,7 @@ and is_destructuring_pattern : type k . k general_pattern -> bool =
 
 let is_valid_recursive_expression idlist expr =
   let ty = expression expr Return in
+  ignore (Misc.print_if Format.err_formatter Clflags.dump_recmodes Env.pp ty);
   match Env.unguarded ty idlist, Env.dependent ty idlist,
         classify_expression expr with
   | _ :: _, _, _ (* The expression inspects rec-bound variables *)
@@ -1253,6 +1279,8 @@ let is_valid_class_expr idlist ce =
       | Tcl_open (_, ce) ->
         class_expr mode ce
   in
-  match Env.unguarded (class_expr Return ce) idlist with
+  let ty = class_expr Return ce in
+  ignore (Misc.print_if Format.err_formatter Clflags.dump_recmodes Env.pp ty);
+  match Env.unguarded ty idlist with
   | [] -> true
   | _ :: _ -> false
