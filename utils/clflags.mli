@@ -127,6 +127,7 @@ val locations : bool ref
 val dump_source : bool ref
 val dump_parsetree : bool ref
 val dump_typedtree : bool ref
+val dump_recmodes : bool ref
 val dump_rawlambda : bool ref
 val dump_lambda : bool ref
 val dump_rawclambda : bool ref
