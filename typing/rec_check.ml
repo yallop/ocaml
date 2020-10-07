@@ -407,16 +407,16 @@ end = struct
   let pp ppf env =
     let n = M.cardinal env in
     let i = ref 0 in
-    Format.fprintf ppf "{@[";
+    Format.fprintf ppf "@[";
     M.iter
       (fun k v ->
         incr i;
         if !i = n then
-          Format.fprintf ppf "@[%a:%a@]" Ident.print k pp_mode v
+          Format.fprintf ppf "@[%s:%a@]" (Ident.name k) pp_mode v
         else
-          Format.fprintf ppf "@[%a:%a@],@;" Ident.print k pp_mode v)
+          Format.fprintf ppf "@[%s:%a@],@;" (Ident.name k) pp_mode v)
       env;
-    Format.fprintf ppf "@]}"
+    Format.fprintf ppf "@]"
 
   let find (id: Ident.t) (tbl: t) =
     try M.find id tbl with Not_found -> Ignore
@@ -1227,9 +1227,13 @@ and is_destructuring_pattern : type k . k general_pattern -> bool =
     | Tpat_or (l,r,_) ->
         is_destructuring_pattern l || is_destructuring_pattern r
 
+let pp_expr_and_env fmt (expr, env) =
+  let uexpr = Untypeast.default_mapper.expr Untypeast.default_mapper expr in
+  Format.fprintf fmt "@[%a@ |-@ @[%a@] : Return@]" Env.pp env Pprintast.expression uexpr
+
 let is_valid_recursive_expression idlist expr =
   let ty = expression expr Return in
-  ignore (Misc.print_if Format.err_formatter Clflags.dump_recmodes Env.pp ty);
+  ignore (Misc.print_if Format.err_formatter Clflags.dump_recmodes pp_expr_and_env (expr, ty));
   match Env.unguarded ty idlist, Env.dependent ty idlist,
         classify_expression expr with
   | _ :: _, _, _ (* The expression inspects rec-bound variables *)
