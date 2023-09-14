@@ -132,7 +132,7 @@ module OP = struct
        failwith "Global.name: empty string"
      else match s.[0] with
      | 'a'..'z' | 'A'..'Z' | '_' -> Other s
-     | _ -> Printf.kprintf failwith "Global.name: bad name: %s" s
+     | _ -> Printf.ksprintf failwith "Global.name: bad name: %s" s
 end
 
 (* Normalized code 

@@ -579,7 +579,7 @@ let rec block_of : varname list -> rexp -> block = fun mutvars -> function
  and to_exps : (binding Sq.t * exp) -> exps = fun (bs,e) ->
    let folder x z = match x with
    | (None,e)      -> e :: z
-   | (Some {id},_) -> Printf.kprintf failwith
+   | (Some {id},_) -> Printf.ksprintf failwith
       "The local binding (to %s) is not allowed in this context" (id :> string)
    in Sq.fold_right folder [e] bs
 

@@ -108,7 +108,7 @@ let rec cnv_exp : exp -> C.expression = function
       failwith "ref outside of let x = ref e binders is not supported"
   | (OP.DEREF _, [e])   -> C.(Unary(MEMOF,e)) 
   | (OP.Other fn,args)  -> C.(Call(Var (fn :> string),args))
-  | _ -> Printf.kprintf failwith "Unsupported op"
+  | _ -> Printf.ksprintf failwith "Unsupported op"
  and
  (* general and special applications. Assignment and mutables have
     already been taken care of
