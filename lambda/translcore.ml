@@ -832,12 +832,9 @@ and transl_curried_function ~scopes ~env loc return repr params body =
         Some (param, kind), body
   in
   (* We freeze local GADTs equations to the set existing before the
-     first partial match that introduces new equations to avoid using equations
-     that are only valid if a match succeeds. *)
+     first partial match to avoid using equations that might be only
+     valid if a match succeeds. *)
   let _, params = List.fold_left_map (fun (local_equations, prev_env) fp ->
-      let env = match fp.fp_kind with
-        | Tparam_pat pat | Tparam_optional_default (pat,_) -> pat.pat_env
-      in
       let local_equations =
         match local_equations, fp.fp_partial, fp.fp_kind with
         | Some _, _, _ -> local_equations
@@ -846,7 +843,10 @@ and transl_curried_function ~scopes ~env loc return repr params body =
         (* in default arguments [?(pat=exp)], [exp] can raise and
            thus even a [Total] pattern can fail. *)
         | None, _, Tparam_optional_default _ ->
-                Env.freeze_if_new_local_equations ~prev:prev_env env
+            Some (Env.freeze_local_equations prev_env)
+      in
+      let env = match fp.fp_kind with
+        | Tparam_pat pat | Tparam_optional_default (pat,_) -> pat.pat_env
       in
       (local_equations,env), (fp, local_equations)
     ) (None, env) params in
