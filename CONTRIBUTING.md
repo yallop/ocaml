@@ -29,7 +29,7 @@ This document assumes that you have a patch against the sources of the
 compiler distribution or an idea for such a patch.
 
 This document is concerned with the process of getting your work merged
-upstream. For details on how to build the compiler from sources and advice on
+upstream. For advice on how to build the compiler from sources
 see [INSTALL.adoc](INSTALL.adoc) and [HACKING.adoc](HACKING.adoc) instead.
 
 ## Workflow
@@ -126,9 +126,10 @@ Chose the pull request route if you have a mature implementation, if you have
 already discussed the changes in advance, if your changes are purely
 implementation details without wider implications, or some such situation.
 
-Chose the RFC route if you merely have a prototype, you haven't discussed or
-iterated on your design much, your changes may impact the ecosystem at large
-(the users, the libraries, the build systems, etc.).
+Chose the RFC route if you merely have a prototype, if you haven't discussed or
+iterated on your design much, if your changes may impact the ecosystem at large
+(the users, the libraries, the build systems, etc.). Basically, use the RFC route
+to get more feedback on the earlier stages of your work.
 
 The rest of this document is concerned only with the pull request route. For
 the RFC route, you can find some documentation on the RFC repository directly.
