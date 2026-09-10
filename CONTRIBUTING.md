@@ -84,6 +84,7 @@ The current list of maintainers is as follows:
 - @OlivierNicole Olivier Nicole
 - @sadiqj Sadiq Jaffer
 - @shindere Sébastien Hinderer
+- @smuenzel Stefan Muenzel
 - @stedolan Stephen Dolan
 - @trefis Thomas Refis
 - @xavierleroy Xavier Leroy
