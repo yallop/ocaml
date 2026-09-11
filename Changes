@@ -614,6 +614,13 @@ Working version
   to report as the number of words of minor heap consumed, including headers.
   (Tim McGilchrist, review by Nicolás Ojeda Bär)
 
+- #15016, #14151: Fix spurious "Runtime_events: corrupt stream" failures when a
+  consumer falls behind the producer. The consumer now reports an overwritten
+  ring slot as lost events rather than corruption, and write_to_ring publishes
+  the ring head advance before overwriting the slots that advance releases.
+  (Tim McGilchrist, reported by mattiasdrp, review by Sadiq Jaffer and
+   Zane Hambly)
+
 OCaml 5.5.1
 -----------
 
